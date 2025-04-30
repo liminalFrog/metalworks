@@ -35,8 +35,10 @@ const DynamicFields: React.FC<DynamicFieldsProps> = ({ title, items, updateItems
         {items.map((item, index) => (
           <Row className="mb-3" key={index}>
             <Col md={5}>
+              <Form.Label>Width (ft)</Form.Label>
               <Form.Control
                 type="number"
+                size="sm"
                 min={1}
                 step={0.1}
                 value={item.width}
@@ -45,8 +47,10 @@ const DynamicFields: React.FC<DynamicFieldsProps> = ({ title, items, updateItems
               />
             </Col>
             <Col md={5}>
+              <Form.Label>Height (ft)</Form.Label>
               <Form.Control
                 type="number"
+                size="sm"
                 min={1}
                 step={0.1}
                 value={item.height}
@@ -61,7 +65,7 @@ const DynamicFields: React.FC<DynamicFieldsProps> = ({ title, items, updateItems
             </Col>
           </Row>
         ))}
-        <Button variant="primary" onClick={handleAdd}>
+        <Button variant="primary" size="sm" onClick={handleAdd}>
           Add {title.slice(0, -1)}
         </Button>
       </Card.Body>

@@ -19,6 +19,7 @@ const Gutters: React.FC<GuttersProps> = ({ data, updateField }) => {
               <Form.Label>Include Gutters?</Form.Label>
               <Form.Select
                 value={data}
+                size="sm"
                 onChange={(e) => updateField(e.target.value)}
                 required
               >

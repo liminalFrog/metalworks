@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gabled Roof Metal Building Material Takeoff</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .section { margin-bottom: 20px; }
+        #output { white-space: pre-wrap; font-family: monospace; }
+        .dynamic-field { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Gabled Roof Metal Building Material Takeoff</h1>
+        <p class="text-muted">For a gabled roof with the ridge centered, each side sloping at specified pitch over half the building width, and panels running perpendicular to eaves.</p>
+        <form id="takeoffForm">
+            <div class="section">
+                <h3>Building Dimensions</h3>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="length" class="form-label">Length (ft):</label>
+                        <input type="number" class="form-control" id="length" min="20" step="1" value="40" required>
+                    </div>
+                    <div class="col">
+                        <label for="width" class="form-label">Width (ft):</label>
+                        <input type="number" class="form-control" id="width" min="20" step="1" value="40" required>
+                    </div>
+                    <div class="col">
+                        <label for="height" class="form-label">Eave Height (ft):</label>
+                        <select class="form-select" id="height" required>
+                            <option value="" disabled>Select</option>
+                            <option value="10">10</option>
+                            <option value="12" selected>12</option>
+                            <option value="14">14</option>
+                            <option value="16">16</option>
+                            <option value="18">18</option>
+                            <option value="20">20</option>
+                            <option value="22">22</option>
+                            <option value="24">24</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="pitch" class="form-label">Roof Pitch (x:12):</label>
+                        <input type="number" class="form-control" id="pitch" min="0.1" max="12" step="0.1" value="3" required placeholder="e.g., 1.5 for 1.5:12">
+                    </div>
+                    <div class="col">
+                        <label for="bays" class="form-label">Number of Bays:</label>
+                        <input type="number" class="form-control" id="bays" min="1" step="1" value="2" required>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h3>Gutters</h3>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="gutters" class="form-label">Include Gutters?</label>
+                        <select class="form-select" id="gutters" required>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="doors">
+                <h3>Doors</h3>
+                <div id="manDoors">
+                    <h5>Man Doors</h5>
+                    <div class="dynamic-field">
+                        <button type="button" class="btn btn-primary btn-sm mb-2" onclick="addManDoor()">Add Man Door</button>
+                    </div>
+                </div>
+                <div id="rollUpDoors">
+                    <h5>Roll-Up Doors</h5>
+                    <div class="dynamic-field">
+                        <button type="button" class="btn btn-primary btn-sm mb-2" onclick="addRollUpDoor()">Add Roll-Up Door</button>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="windows">
+                <h3>Windows</h3>
+                <div class="dynamic-field">
+                    <button type="button" class="btn btn-primary btn-sm mb-2" onclick="addWindow()">Add Window</button>
+                </div>
+            </div>
+            <div class="section" id="awnings">
+                <h3>Awnings</h3>
+                <div class="dynamic-field">
+                    <button type="button" class="btn btn-primary btn-sm mb-2" onclick="addAwning()">Add Awning</button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Generate Material Takeoff</button>
+        </form>
+        <div class="mt-4">
+            <h3>Material Takeoff</h3>
+            <div id="output" class="border p-3"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Function to convert decimal feet to feet and inches
+        function toFeetAndInches(decimalFeet) {
+            const feet = Math.floor(decimalFeet);
+            const decimalPart = decimalFeet - feet;
+            const inches = Math.round(decimalPart * 12);
+            if (inches === 0) {
+                return `${feet}'`;
+            }
+            return `${feet}'${inches}"`;
+        }
+
+        function addManDoor(width = 3, height = 7) {
+            const container = document.createElement('div');
+            container.className = 'row mb-2 man-door';
+            container.innerHTML = `
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Width (ft)" min="3" step="0.1" value="${width}" required>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Height (ft)" min="6" step="0.1" value="${height}" required>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">Remove</button>
+                </div>
+            `;
+            document.getElementById('manDoors').appendChild(container);
+        }
+
+        function addRollUpDoor(width = 10, height = 10) {
+            const container = document.createElement('div');
+            container.className = 'row mb-2 roll-up-door';
+            container.innerHTML = `
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Width (ft)" min="8" step="0.1" value="${width}" required>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Height (ft)" min="8" step="0.1" value="${height}" required>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">Remove</button>
+                </div>
+            `;
+            document.getElementById('rollUpDoors').appendChild(container);
+        }
+
+        function addWindow(width = 4, height = 1) {
+            const container = document.createElement('div');
+            container.className = 'row mb-2 window';
+            container.innerHTML = `
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Width (ft)" min="2" step="0.1" value="${width}" required>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Height (ft)" min="2" step="0.1" value="${height}" required>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">Remove</button>
+                </div>
+            `;
+            document.getElementById('windows').appendChild(container);
+        }
+
+        function addAwning() {
+            const container = document.createElement('div');
+            container.className = 'row mb-2 awning';
+            container.innerHTML = `
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Width (ft)" min="4" step="0.1" required>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" placeholder="Projection (ft)" min="2" step="0.1" required>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">Remove</button>
+                </div>
+            `;
+            document.getElementById('awnings').appendChild(container);
+        }
+
+        // Prefill the form with sample data
+        function prefillForm() {
+            // Add one 3x7 man door
+            addManDoor(3, 7);
+
+            // Add roll-up doors: one 16x10, two 10x10
+            addRollUpDoor(16, 10); // 16x10 roll-up door (front)
+            addRollUpDoor(10, 10); // 10x10 roll-up door (front)
+            addRollUpDoor(10, 10); // 10x10 roll-up door (back)
+        }
+
+        document.getElementById('takeoffForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const length = parseFloat(document.getElementById('length').value);
+            const width = parseFloat(document.getElementById('width').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const pitch = parseFloat(document.getElementById('pitch').value);
+            const bays = parseInt(document.getElementById('bays').value);
+            const guttersOption = document.getElementById('gutters').value;
+
+            // Validate pitch
+            if (pitch < 0.1 || pitch > 12) {
+                alert('Roof pitch must be between 0.1 and 12 (x:12).');
+                return;
+            }
+
+            // Calculate slope multiplier for gabled roof (per side)
+            const runPerSide = width / 2; // Horizontal run per side
+            const risePerSide = (pitch / 12) * runPerSide; // Vertical rise per side
+            const slopeLengthPerSide = Math.sqrt(runPerSide ** 2 + risePerSide ** 2); // Sloped length per side
+            const totalSlopeLength = slopeLengthPerSide * 2; // Total sloped length (for reference)
+
+            // Add 2 inches (2/12 feet) to roof panel length
+            const roofPanelLength = slopeLengthPerSide + (2 / 12); // Add 2 inches
+
+            // Gabled roof height calculations
+            const ridgeHeight = height + risePerSide; // Height at the ridge
+            const slopePerFoot = risePerSide / runPerSide; // Rise per foot along the width
+
+            // I-beams (columns and rafters)
+            const bayLength = length / bays; // Length of each bay (20' for 2 bays)
+            const rafterAssemblies = bays + 1; // One at each end and between bays (0', 20', 40')
+            const columnsPerAssembly = 2;
+            const totalColumns = rafterAssemblies * columnsPerAssembly; // 3 assemblies * 2 = 6
+            const raftersPerAssembly = 2; // 2 rafters per assembly (bolted at apex)
+            const totalRafters = rafterAssemblies * raftersPerAssembly; // 3 assemblies * 2 = 6
+
+            // Purlins (5' spacing, 5 per side of gabled roof)
+            const purlinsPerSide = Math.ceil(slopeLengthPerSide / 5); // 5 purlins per side
+            const totalPurlinLines = purlinsPerSide * 2; // Total purlin lines (10)
+            const purlinSegmentsPerLine = bays; // Each line split into 2 segments (20' each)
+            const totalPurlinPieces = totalPurlinLines * purlinSegmentsPerLine; // 10 lines * 2 = 20 pieces
+            const purlinLength = bayLength; // Each piece is 20' long
+
+            // Wall girts (sidewalls: fixed at 5' and 10'; gabled end walls: 5' spacing from base, final girt at eave height, additional girt if peak distance > 7')
+            const wallGirtsPerSideHeightSidewall = 2; // Fixed at 5' and 10' for sidewalls
+            const girtSpacing = 5; // 5' spacing for gabled end walls
+            let wallGirtsPerSideHeightEndwall = Math.floor(height / girtSpacing) + 1; // Start at 0', girts at 5', 10', final at eave (12')
+            const distanceToPeak = ridgeHeight - height; // Distance from eave to peak
+            if (distanceToPeak > 7) {
+                wallGirtsPerSideHeightEndwall += 1; // Add an additional girt if distance to peak exceeds 7'
+            }
+            const totalWallGirtsLinesSidewall = wallGirtsPerSideHeightSidewall * 2; // 2 girts * 2 sidewalls = 4 lines
+            const totalWallGirtsLinesEndwall = wallGirtsPerSideHeightEndwall * 2; // 3 girts * 2 end walls = 6 lines
+            const girtSegmentsPerLineSidewall = bays; // Sidewall girts split at columns (2 segments: 0'-20', 20'-40')
+
+            // Roll-up door positioning
+            let rollUpDoorsFront = [];
+            let rollUpDoorsBack = [];
+            const rollUpDoors = document.querySelectorAll('.roll-up-door');
+            rollUpDoors.forEach((door, index) => {
+                const doorWidth = parseFloat(door.querySelectorAll('input')[0].value);
+                const doorHeight = parseFloat(door.querySelectorAll('input')[1].value);
+                if (index < 2) { // Front gabled end wall
+                    rollUpDoorsFront.push({ width: doorWidth, height: doorHeight });
+                } else { // Back gabled end wall
+                    rollUpDoorsBack.push({ width: doorWidth, height: doorHeight });
+                }
+            });
+
+            // Position roll-up doors on front gabled end wall (two doors)
+            if (rollUpDoorsFront.length === 2) {
+                const totalDoorWidth = rollUpDoorsFront.reduce((sum, door) => sum + door.width, 0); // 16' + 10' = 26'
+                const remainingWidth = width - totalDoorWidth; // 40' - 26' = 14'
+                const spacingInFeet = remainingWidth / 3; // 14' / 3 = 4.6667'
+                const spacingInInches = spacingInFeet * 12; // 4.6667 * 12 = 56 inches
+                const roundedSpacingInInches = Math.round(spacingInInches); // 56 inches
+                const roundedSpacingInFeet = roundedSpacingInInches / 12; // 56 / 12 = 4.6667' (4'8")
+                rollUpDoorsFront[0].start = roundedSpacingInFeet; // First door starts at 4'8"
+                rollUpDoorsFront[0].end = rollUpDoorsFront[0].start + rollUpDoorsFront[0].width; // 4'8" to 14'8"
+                rollUpDoorsFront[1].start = rollUpDoorsFront[0].end + roundedSpacingInFeet; // 14'8" + 4'8" = 19'4"
+                rollUpDoorsFront[1].end = rollUpDoorsFront[1].start + rollUpDoorsFront[1].width; // 19'4" to 35'4"
+            }
+
+            // Position roll-up doors on back gabled end wall (one door)
+            if (rollUpDoorsBack.length === 1) {
+                const doorWidth = rollUpDoorsBack[0].width; // 10'
+                rollUpDoorsBack[0].start = (width - doorWidth) / 2; // (40' - 10') / 2 = 15'
+                rollUpDoorsBack[0].end = rollUpDoorsBack[0].start + doorWidth; // 15' to 25'
+            }
+
+            // Gabled end wall girt segments: Adjust for roll-up doors
+            let totalGirtPiecesEndwall = 0;
+            let tekScrewsGabledEnd = 0;
+            let lapScrewsGabledEnd = 0;
+            const panelWidth = 3; // Standard panel width
+            const gabledEndPanelsPerWall = Math.ceil(width / panelWidth); // 14 panels per gabled end wall
+            const totalGabledEndPanels = gabledEndPanelsPerWall * 2; // 28 panels total
+
+            // Front gabled end wall
+            let frontGirtPieces = 0;
+            let frontTekScrews = 0;
+            let frontLapScrews = 0;
+            let frontNonDoorPanels = 0;
+            let frontNonDoorWidth = 0;
+            for (let h = girtSpacing; h <= height; h += girtSpacing) {
+                if (h > height) h = height; // Final girt at eave height
+                let isAboveHeader = h > 10; // Header height assumed at 10'
+                if (isAboveHeader) {
+                    // Girt spans full wall
+                    frontGirtPieces += 2; // 0'-20', 20'-40'
+                    frontTekScrews += 40; // 40' span
+                    frontLapScrews += gabledEndPanelsPerWall * 2; // 14 panels * 2 screws
+                } else {
+                    // Girt does not span between door jambs
+                    let nonDoorWidth = 0;
+                    if (h <= 10) {
+                        // Sections: 0'-4'8", 14'8"-19'4", 35'4"-40'
+                        nonDoorWidth = (4 + 8/12) + ((19 + 4/12) - (14 + 8/12)) + (40 - (35 + 4/12)); // 4.67' + 4.67' + 4.67' = 14.01'
+                        frontGirtPieces += 1; // 1 piece for 14' (cut from 20')
+                        frontTekScrews += Math.round(nonDoorWidth); // 14 screws
+                        // Panels not over doors: 0 to 6' (panels 0 to 1), 15' to 18' (panel 6), 36' to 42' (panel 13)
+                        frontNonDoorPanels = 2 + 1 + 1; // 4 panels
+                        frontLapScrews += frontNonDoorPanels * 2; // 4 panels * 2 screws
+                    }
+                    frontNonDoorWidth = nonDoorWidth;
+                }
+            }
+            frontLapScrews = frontNonDoorPanels * 2 * 2; // 4 panels * 2 girts * 2 screws
+
+            // Back gabled end wall
+            let backGirtPieces = 0;
+            let backTekScrews = 0;
+            let backLapScrews = 0;
+            let backNonDoorPanels = 0;
+            let backNonDoorWidth = 0;
+            for (let h = girtSpacing; h <= height; h += girtSpacing) {
+                if (h > height) h = height; // Final girt at eave height
+                let isAboveHeader = h > 10; // Header height assumed at 10'
+                if (isAboveHeader) {
+                    // Girt spans full wall
+                    backGirtPieces += 2; // 0'-20', 20'-40'
+                    backTekScrews += 40; // 40' span
+                    backLapScrews += gabledEndPanelsPerWall * 2; // 14 panels * 2 screws
+                } else {
+                    // Girt does not span between door jambs
+                    let nonDoorWidth = 0;
+                    if (h <= 10) {
+                        // Sections: 0'-15', 25'-40'
+                        nonDoorWidth = (15 - 0) + (40 - 25); // 15' + 15' = 30'
+                        backGirtPieces += 2; // 2 pieces: 15', 15' (cut from 20')
+                        backTekScrews += nonDoorWidth; // 30 screws
+                        // Panels not over doors: 0 to 15' (panels 0 to 4), 24' to 40' (panels 9 to 13)
+                        backNonDoorPanels = (15 / panelWidth) + (40 - 24) / panelWidth; // 5 + 5 = 10 panels
+                        backLapScrews += backNonDoorPanels * 2; // 10 panels * 2 screws
+                    }
+                    backNonDoorWidth = nonDoorWidth;
+                }
+            }
+            backLapScrews = backNonDoorPanels * 2 * 2; // 10 panels * 2 girts * 2 screws
+
+            totalGirtPiecesEndwall = frontGirtPieces + backGirtPieces; // 4 (front) + 6 (back) = 10 pieces
+            tekScrewsGabledEnd = frontTekScrews + backTekScrews; // 28 + 60 (5', 10') + 80 (12') = 168 screws
+            lapScrewsGabledEnd = frontLapScrews + backLapScrews + (gabledEndPanelsPerWall * 2 * 2); // 16 + 40 + 56 = 112 screws
+
+            const totalGirtPiecesSidewall = wallGirtsPerSideHeightSidewall * 2 * girtSegmentsPerLineSidewall; // 2 * 2 * 2 = 8 pieces
+            const totalGirtPieces = totalGirtPiecesSidewall + totalGirtPiecesEndwall; // 8 + 10 = 18 pieces
+            const girtLength = bayLength; // Each piece matches the bay length (20')
+
+            // Base Angle (along the perimeter at foundation and along gabled end wall roof lines, as a structural component)
+            const baseAnglePerimeterLengthOriginal = (length * 2) + (width * 2); // Perimeter at foundation (160')
+            const rollUpDoorWidths = [16, 10, 10]; // Widths of roll-up doors: 16' (front), 10' (front), 10' (back)
+            const totalRollUpDoorWidth = rollUpDoorWidths.reduce((sum, width) => sum + width, 0); // 16' + 10' + 10' = 36'
+            const baseAnglePerimeterLength = baseAnglePerimeterLengthOriginal - totalRollUpDoorWidth; // 160' - 36' = 124'
+            const baseAnglePerimeterPieces = Math.ceil(baseAnglePerimeterLength / 20); // 124' / 20' = 7 pieces at 20' each
+            const gabledEndRoofLinePieces = 4; // 4 sloped sides (2 per gabled end wall), each requiring a single 25' piece
+            const gabledEndRoofLineLength = 25; // Using 25' pieces to avoid splicing (will need to be cut to 20'7")
+            const baseAnglePerimeterOutput = `- Base Angle (4"x2") for Foundation: ${baseAnglePerimeterPieces} @ 20' each (Note: 25' pieces also available; excludes roll-up door areas)`;
+            const baseAngleGabledOutput = `- Base Angle (4"x2") for Gabled End Wall Roof Lines: ${gabledEndRoofLinePieces} @ ${toFeetAndInches(gabledEndRoofLineLength)} each (single pieces to avoid splicing; cut to 20'7")`;
+
+            // Sheeting (panels perpendicular to eaves)
+            const roofPanels = Math.ceil(length / panelWidth) * 2; // Both roof sides
+
+            // Panel Closures (outside and inside, matching the number of roof panels)
+            const outsidePanelClosures = roofPanels; // Same as number of roof panels
+            const insidePanelClosures = roofPanels;  // Same as number of roof panels
+            const panelClosuresOutput = `
+- Outside Panel Closures: ${outsidePanelClosures}
+- Inside Panel Closures: ${insidePanelClosures}
+`;
+
+            // Peak Boxes (1 per end of the gabled roof, total 2)
+            const peakBoxes = 2; // 1 peak box per end (front and back)
+            const peakBoxesOutput = `- Peak Boxes: ${peakBoxes}`;
+
+            // Sculpted Rake Trim (4 pieces, each the length of the roof panels)
+            const rakeTrimPieces = 4; // One for each rake edge (2 gabled ends * 2 edges per end)
+            const rakeTrimLength = roofPanelLength; // Matches the roof panel length (20'9")
+            const rakeTrimOutput = `- Sculpted Rake Trim: ${rakeTrimPieces} @ ${toFeetAndInches(rakeTrimLength)} each`;
+
+            // Ridge Roll (along the peak of the building)
+            const ridgeRollLength = length; // Matches the building length (40')
+            const ridgeRollOutput = `- Ridge Roll: 1 @ ${toFeetAndInches(ridgeRollLength)}`;
+
+            // Sculpted Corner Trim (4 pieces, each the height of the eaves)
+            const cornerTrimPieces = 4; // One for each corner of the building
+            const cornerTrimLength = height; // Matches the eave height (12')
+            const cornerTrimOutput = `- Sculpted Corner Trim: ${cornerTrimPieces} @ ${toFeetAndInches(cornerTrimLength)} each`;
+
+            // Wall panels: Separate side walls and gabled end walls, no reductions
+            const sideWallPanelsPerWall = Math.ceil(length / panelWidth); // Panels per sidewall (14)
+            const totalSideWallPanels = sideWallPanelsPerWall * 2; // 14 * 2 = 28
+            const gabledEndPanelsPerWall = Math.ceil(width / panelWidth); // Panels per gabled end wall (14)
+            const totalGabledEndPanels = gabledEndPanelsPerWall * 2; // 14 * 2 = 28
+
+            // Sidewall panels: Set to eave height, fixed at 14 per sidewall
+            let sideWallPanelHeights = Array(sideWallPanelsPerWall).fill(height); // All panels at eave height
+            const sideWallPanelHeightsFormatted = sideWallPanelHeights.map(h => toFeetAndInches(h));
+
+            // Calculate heights for gabled end wall panels (from base to gable roofline along the width)
+            let gabledEndPanelHeights = [];
+            for (let i = 0; i < gabledEndPanelsPerWall; i++) {
+                const leftPos = i * panelWidth;
+                const rightPos = (i + 1) * panelWidth;
+                let heightAtPos;
+                if (leftPos < width / 2 && rightPos <= width / 2) {
+                    // Left of peak: use right edge
+                    heightAtPos = height + Math.min(rightPos, width - rightPos) * slopePerFoot;
+                } else if (leftPos >= width / 2) {
+                    // Right of peak: use left edge
+                    heightAtPos = height + Math.min(leftPos, width - leftPos) * slopePerFoot;
+                } else {
+                    // Straddles peak: use peak height
+                    heightAtPos = ridgeHeight;
+                }
+                gabledEndPanelHeights.push(heightAtPos);
+            }
+            const gabledEndPanelHeightsFormatted = gabledEndPanelHeights.map(h => toFeetAndInches(h));
+
+            // Drip Flashing (around the base of the walls)
+            const dripFlashingPieces = 4; // 4 walls (2 sidewalls, 2 gabled end walls)
+            const dripFlashingLength = length; // Each piece matches the wall length (40', assuming square building)
+
+            const dripFlashingOutput = `
+- Drip Flashing (Base of Walls): ${dripFlashingPieces} @ ${toFeetAndInches(dripFlashingLength)} each
+`;
+
+            // Gutters or Eave Trim
+            let gutterOutput = '';
+            if (guttersOption === 'no') {
+                // Eave Trim: 1 per sidewall
+                const eaveTrimPieces = 2; // 2 sidewalls
+                const eaveTrimLength = length; // Matches sidewall length
+                gutterOutput = `- Eave Trim: ${eaveTrimPieces} @ ${toFeetAndInches(eaveTrimLength)} each`;
+            } else {
+                // Gutters: 1 per sidewall
+                const gutterPieces = 2; // 2 sidewalls
+                const gutterLength = length; // Matches sidewall length
+                // Gutter Straps: Length / 2
+                const gutterStrapsPerGutter = Math.floor(gutterLength / 2);
+                const totalGutterStraps = gutterStrapsPerGutter * gutterPieces;
+                // Downspouts: 1 every 20'
+                const downspoutsPerGutter = Math.ceil(gutterLength / 20);
+                const totalDownspouts = downspoutsPerGutter * gutterPieces;
+                const downspoutLength = height; // From eave to ground
+                // Downspout Kickouts: 1 per downspout
+                const totalKickouts = totalDownspouts;
+                // Downspout Straps: 2 per downspout
+                const totalDownspoutStraps = totalDownspouts * 2;
+                // Gutter Endcap Pairs: 1 per side with gutters
+                const gutterEndcapPairs = gutterPieces;
+                // Corner Box Pairs: 1 per side with gutters
+                const cornerBoxPairs = gutterPieces;
+
+                gutterOutput = `
+- Gutters: ${gutterPieces} @ ${toFeetAndInches(gutterLength)} each
+- Gutter Straps: ${totalGutterStraps}
+- Downspouts: ${totalDownspouts} @ ${toFeetAndInches(downspoutLength)} each
+- Downspout Kickouts: ${totalKickouts}
+- Downspout Straps: ${totalDownspoutStraps}
+- Gutter Endcap Pairs: ${gutterEndcapPairs}
+- Corner Box Pairs: ${cornerBoxPairs}
+`;
+            }
+
+            // Doors and windows adjustments
+            let manDoorHeaderPurlins = 0;
+            let windowFramingPurlins = 0;
+            let doorJambs = [];
+            let headerTrim = {};
+            let doorJambCasing = {};
+
+            const manDoors = document.querySelectorAll('.man-door');
+            manDoors.forEach(door => {
+                const width = parseFloat(door.querySelectorAll('input')[0].value);
+                manDoorHeaderPurlins += 1; // One purlin across the top, spanning the bay
+
+                // Man door header trim: 1 piece at 11', 1 piece at 8'
+                headerTrim[11] = (headerTrim[11] || 0) + 1; // 11' for header + one jamb
+                headerTrim[8] = (headerTrim[8] || 0) + 1;  // 8' for the other jamb
+            });
+
+            const rollUpDoors = document.querySelectorAll('.roll-up-door');
+            rollUpDoors.forEach((door, index) => {
+                const doorWidth = parseFloat(door.querySelectorAll('input')[0].value);
+                const doorHeight = parseFloat(door.querySelectorAll('input')[1].value);
+                let startPos, endPos;
+                if (index === 0) { // 16x10 door (front)
+                    startPos = rollUpDoorsFront[1].start; // 19'4" (sorted by position)
+                    endPos = rollUpDoorsFront[1].end; // 35'4"
+                } else if (index === 1) { // 10x10 door (front)
+                    startPos = rollUpDoorsFront[0].start; // 4'8"
+                    endPos = rollUpDoorsFront[0].end; // 14'8"
+                } else { // 10x10 door (back)
+                    startPos = rollUpDoorsBack[0].start; // 15'
+                    endPos = rollUpDoorsBack[0].end; // 25'
+                }
+
+                // Calculate height at door edges for jambs
+                const heightAtStart = height + Math.min(startPos, width - startPos) * slopePerFoot;
+                const heightAtEnd = height + Math.min(endPos, width - endPos) * slopePerFoot;
+                const jambHeight = (heightAtStart + heightAtEnd) / 2;
+                doorJambs.push({ width: doorWidth, height: jambHeight });
+
+                // Roll-up door header trim: 1 piece at width + 1', 2 pieces at height + 1'
+                const headerTrimLength = doorWidth + 1;
+                const jambTrimLength = doorHeight + 1;
+                headerTrim[headerTrimLength] = (headerTrim[headerTrimLength] || 0) + 1; // Header trim
+                headerTrim[jambTrimLength] = (headerTrim[jambTrimLength] || 0) + 2;   // Two jamb pieces
+
+                // Roll-up door 4" jamb casing: 1 piece at header trim length, 2 pieces at jamb trim length
+                doorJambCasing[headerTrimLength] = (doorJambCasing[headerTrimLength] || 0) + 1; // 1 piece matching header trim
+                doorJambCasing[jambTrimLength] = (doorJambCasing[jambTrimLength] || 0) + 2;     // 2 pieces matching jamb trim
+            });
+
+            const windows = document.querySelectorAll('.window');
+            windows.forEach((window, index) => {
+                const windowWidth = parseFloat(window.querySelectorAll('input')[0].value);
+                windowFramingPurlins += 2; // 2 purlins per window (top and bottom)
+
+                // Window header trim: 2 pieces at (width + height + 1')
+                const windowHeight = parseFloat(window.querySelectorAll('input')[1].value);
+                const windowTrimLength = windowWidth + windowHeight + 1;
+                headerTrim[windowTrimLength] = (headerTrim[windowTrimLength] || 0) + 2; // Two pieces per window
+            });
+
+            // Awnings
+            const awnings = document.querySelectorAll('.awning');
+            let awningFrames = 0;
+            awnings.forEach(awning => {
+                awningFrames += 3; // Two sides and one front frame per awning
+            });
+
+            // TEK Screws for fastening panels to purlins/girts
+            const tekScrewsRoof = length * totalPurlinLines; // Span = building length (40'), purlins = 10 lines
+            const sidewallFasteningPoints = 4; // Base angle, 5' girt, 10' girt, eave strut
+            const tekScrewsSidewall = length * sidewallFasteningPoints; // Span = building length (40'), fastening points = 4 (base angle, 5', 10', eave strut)
+            const totalWallTekScrews = tekScrewsSidewall + tekScrewsGabledEnd;
+            const tekScrewsTrim = 250; // Additional TEK screws for trim
+            const tekScrewsRoofOutput = `- #12 x 1-1/4" Hex Washer Head TEK Screws (Roof): ${tekScrewsRoof} (for roof panel-to-purlin fastening)`;
+            const tekScrewsWallOutput = `- #12 x 1-1/4" Hex Washer Head TEK Screws (Walls): ${totalWallTekScrews} (for wall panel-to-girt fastening; sidewalls fastened to base angle, 5' girt, 10' girt, eave strut)`;
+            const tekScrewsTrimOutput = `- #12 x 1-1/4" Hex Washer Head TEK Screws (Trim): ${tekScrewsTrim} (for trim fastening)`;
+
+            // LAP Screws for fastening panel sidelaps
+            const lapScrewsRoof = (roofPanels * totalPurlinLines) * 2; // 28 panels × 10 purlins × 2
+            const lapScrewsSidewall = (totalSideWallPanels * (wallGirtsPerSideHeightSidewall * 2)) * 2; // 28 panels × 4 girts × 2 = 224 screws
+            const totalWallLapScrews = lapScrewsSidewall + lapScrewsGabledEnd;
+            const lapScrewsTrim = 250; // Additional LAP screws for trim
+            const lapScrewsRoofOutput = `- #10 x 7/8" Hex Washer Head LAP Screws with Bonded Sealing Washer (Roof): ${lapScrewsRoof} (for roof panel sidelaps)`;
+            const lapScrewsWallOutput = `- #10 x 7/8" Hex Washer Head LAP Screws with Bonded Sealing Washer (Walls): ${totalWallLapScrews} (for wall panel sidelaps)`;
+            const lapScrewsTrimOutput = `- #10 x 7/8" Hex Washer Head LAP Screws with Bonded Sealing Washer (Trim): ${lapScrewsTrim} (for trim fastening)`;
+
+            // Philips Head Pancake Screws for window and window header trim installation
+            const screwsPerWindow = 24; // 24 screws per window
+            const totalWindowScrews = windows.length * screwsPerWindow; // Total screws for all windows
+            const windowScrewsOutput = `- #10 x 1" Philips Head Pancake Screws: ${totalWindowScrews} (for window and window header trim installation)`;
+
+            // Concrete Drive-In Anchors for base angle on the ground
+            const anchorsPerFoot = 1 / 3; // 1 anchor per 3 feet
+            const totalBaseAngleOnGround = baseAnglePerimeterLength; // Adjusted to 124' after excluding roll-up door areas
+            const totalAnchors = Math.ceil(totalBaseAngleOnGround * anchorsPerFoot); // 124' / 3 ≈ 41.33 → 42 anchors
+            const concreteAnchorsOutput = `- 2" x 1/4" Concrete Drive-In Anchors: ${totalAnchors} (for securing base angle to foundation; 1 per 3'; excludes roll-up door areas)`;
+
+            // Format header trim output
+            let headerTrimOutput = '';
+            const sortedTrimLengths = Object.keys(headerTrim).sort((a, b) => a - b);
+            sortedTrimLengths.forEach(length => {
+                const count = headerTrim[length];
+                headerTrimOutput += `- Header Trim: ${count} @ ${toFeetAndInches(parseFloat(length))} each\n`;
+            });
+
+            // Format door jamb casing output
+            let doorJambCasingOutput = '';
+            const sortedCasingLengths = Object.keys(doorJambCasing).sort((a, b) => a - b);
+            sortedCasingLengths.forEach(length => {
+                const count = doorJambCasing[length];
+                doorJambCasingOutput += `- 4" Door Jamb Casing: ${count} @ ${toFeetAndInches(parseFloat(length))} each\n`;
+            });
+
+            // Format wall panels output
+            const sideWallPanelsOutput = `- Side Wall Panels: ${totalSideWallPanels} @ ${toFeetAndInches(height)} each`;
+            
+            // Gabled end wall panels (front and back), no reductions
+            const gabledEndPanelsOutput = `
+- Gabled End Wall Panels (Front): Total ${gabledEndPanelsPerWall}
+  Heights: ${gabledEndPanelHeightsFormatted.join(', ')}
+- Gabled End Wall Panels (Back): Total ${gabledEndPanelsPerWall}
+  Heights: ${gabledEndPanelHeightsFormatted.join(', ')}
+`;
+
+            // Format door jambs output
+            let doorJambsOutput = doorJambs.map(jamb => 
+                `- Door Jambs (Square Tubing) for ${jamb.width}'x10' Roll-Up Door: 2 @ ${toFeetAndInches(jamb.height)} each`
+            ).join('\n');
+
+            // Output
+            const output = `
+Material Takeoff for Gabled Roof:
+- Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span.
+- Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with 2" added to gable hypotenuse).
+- Note: Roof purlins are 5 per side of the gabled roof, totaling ${totalPurlinLines} lines, split at middle rafter.
+- Note: Wall girts are split at column positions.
+- Note: Sidewall girts are positioned at 5' and 10'; sidewall panels are fastened to base angle, 5' girt, 10' girt, and eave strut.
+- Note: Gabled end wall girts are positioned at 5' spacing from the base, with the final girt at eave height (${height}'); additional girt added if peak distance exceeds 7'; girts do not span between roll-up door jambs unless above the header (10').
+- Note: Roll-up doors on gabled end walls: single door is centered; two or more doors are spaced equally between sidewalls and each other for uniform visible panel spacing (rounded to nearest inch).
+- Note: Man door header purlins span the full bay length; no purlins used as jambs for man doors.
+- Note: Window framing purlins are for top and bottom, spanning the full bay length.
+- Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
+- Columns (I-beams): ${totalColumns} @ ${toFeetAndInches(height)} each
+- Rafters (I-beams): ${totalRafters} @ ${toFeetAndInches(slopeLengthPerSide)} each
+- Roof Purlins: ${totalPurlinPieces} @ ${toFeetAndInches(purlinLength)} each
+- Wall Girts: ${totalGirtPieces} @ ${toFeetAndInches(girtLength)} each
+${baseAnglePerimeterOutput}
+${baseAngleGabledOutput}
+- Roof Panels: ${roofPanels} @ ${toFeetAndInches(roofPanelLength)} each
+${ridgeRollOutput}
+${panelClosuresOutput}
+${peakBoxesOutput}
+${rakeTrimOutput}
+${sideWallPanelsOutput}
+${gabledEndPanelsOutput}${cornerTrimOutput}${dripFlashingOutput}${gutterOutput}${headerTrimOutput}${doorJambsOutput}
+${doorJambCasingOutput}${tekScrewsRoofOutput}
+${tekScrewsWallOutput}
+${tekScrewsTrimOutput}
+${lapScrewsRoofOutput}
+${lapScrewsWallOutput}
+${lapScrewsTrimOutput}
+${windowScrewsOutput}
+${concreteAnchorsOutput}
+- Man Door Header Purlins: ${manDoorHeaderPurlins} @ ${toFeetAndInches(bayLength)} each
+- Window Framing Purlins: ${windowFramingPurlins} @ ${toFeetAndInches(bayLength)} each
+- Awning Frames: ${awningFrames} @ varying lengths
+- Man Doors: ${manDoors.length}
+- Roll-Up Doors: ${rollUpDoors.length}
+- Windows: ${windows.length}
+- Awnings: ${awnings.length}
+            `;
+            document.getElementById('output').textContent = output;
+        });
+
+        // Prefill and auto-submit on page load
+        window.onload = function () {
+            prefillForm();
+            document.getElementById('takeoffForm').dispatchEvent(new Event('submit'));
+        };
+    </script>
+</body>
+</html>

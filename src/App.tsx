@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 import BuildingDimensions from './components/BuildingDimensions';
 import RoofOptions from './components/RoofOptions';
 import ColorOptions from './components/ColorOptions';
@@ -82,6 +82,7 @@ function App() {
   });
   
   const [materialTakeoff, setMaterialTakeoff] = useState('');
+  const [appLoading, setAppLoading] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,18 +97,43 @@ function App() {
     }));
   };
 
+  // Handle initial app loading
+  useEffect(() => {
+    // Simulate app loading time (remove this in production)
+    const timer = setTimeout(() => {
+      setAppLoading(false);
+    }, 2000); // You can adjust this or remove the timeout in production
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   // Auto-generate takeoff on initial render and when key building parameters change
   useEffect(() => {
-    const takeoff = generateMaterialTakeoff(buildingData);
-    setMaterialTakeoff(takeoff);
+    if (!appLoading) {
+      const takeoff = generateMaterialTakeoff(buildingData);
+      setMaterialTakeoff(takeoff);
+    }
   }, [
     buildingData.length, 
     buildingData.width, 
     buildingData.height, 
     buildingData.bays,
     buildingData.roofType,
-    buildingData.roofPitch
+    buildingData.roofPitch,
+    appLoading // Don't run this until app is loaded
   ]);
+
+  if (appLoading) {
+    return (
+      <div className="app-loading-overlay">
+        <div className="app-loading-content">
+          <Spinner animation="border" variant="primary" />
+          <h3 className="mt-3">Loading MetalWorks</h3>
+          <p>Initializing application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Container fluid className='overflow-hidden'>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Card, Form, Row, Col, Button, Nav, Tab } from 'react-bootstrap';
+import { Card, Form, Row, Col, Button, Nav, Tab, InputGroup } from 'react-bootstrap';
 
-// Update interfaces to include new positioning options
+// Update interfaces to include new positioning options and lock flags
 interface PositionConfig {
   centered: boolean;
   centerIn: string; // 'building', 'bay', 'objects'
@@ -17,7 +17,11 @@ interface WallOptionsProps {
       [key: string]: {
         girts: {
           size: string;
-          spacing: number[];
+          sizeLocked: boolean;
+          spacing: number;
+          spacingLocked: boolean;
+          maxGap: number;
+          maxGapLocked: boolean;
         };
         doors: {
           dimensions: string;
@@ -97,8 +101,11 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   
   const generateId = () => Math.random().toString(36).substring(2, 15);
   
+  // Update the updateWallField function
+
   const updateWallField = (wall: string, field: string, value: any) => {
-    const updatedWalls = { ...data.walls };
+    // Create a deep clone of the walls object
+    const updatedWalls = JSON.parse(JSON.stringify(data.walls));
     const path = field.split('.');
     
     let current = updatedWalls[wall];
@@ -108,6 +115,61 @@ const WallOptions: React.FC<WallOptionsProps> = ({
     
     current[path[path.length - 1]] = value;
     updateField('walls', updatedWalls);
+  };
+  
+  // Apply settings to all walls if not locked
+  const applyToAllWalls = (sourceWall: string, field: string) => {
+    const updatedWalls = { ...data.walls };
+    const path = field.split('.');
+    
+    // Get the value from source wall
+    let sourceValue = data.walls[sourceWall];
+    for (let i = 0; i < path.length; i++) {
+      sourceValue = sourceValue[path[i]];
+    }
+    
+    // Determine the corresponding lock field name
+    const lockFieldName = `${path[path.length-1]}Locked`;
+    
+    // Apply to other walls if not locked
+    Object.keys(updatedWalls).forEach(wall => {
+      if (wall !== sourceWall) {
+        // Check if the target wall has this field locked
+        let targetWall = updatedWalls[wall];
+        
+        // Navigate to the parent object of the field
+        let parent = targetWall;
+        for (let i = 0; i < path.length - 1; i++) {
+          parent = parent[path[i]];
+        }
+        
+        // Only update if not locked
+        if (!parent[lockFieldName]) {
+          parent[path[path.length - 1]] = sourceValue;
+        }
+      }
+    });
+    
+    updateField('walls', updatedWalls);
+  };
+  
+  const calculateGirtPositions = (height: number, spacing: number, maxGap: number) => {
+    const positions: number[] = [];
+    
+    let currentHeight = spacing;
+    while (currentHeight < height) {
+      positions.push(currentHeight);
+      currentHeight += spacing;
+    }
+    
+    const lastGirtPos = positions.length > 0 ? positions[positions.length - 1] : 0;
+    const gapToEave = height - lastGirtPos;
+    
+    if (gapToEave > maxGap && gapToEave < spacing) {
+      positions.push(height - maxGap/2);
+    }
+    
+    return positions;
   };
   
   const getBayOptions = () => {
@@ -122,10 +184,17 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   };
   
   const addDoor = (wall: string) => {
-    const updatedWalls = { ...data.walls };
+    const updatedWalls = JSON.parse(JSON.stringify(data.walls)); // Deep clone
     updatedWalls[wall].doors.push({
       dimensions: '3x7',
-      position: { ...defaultPosition },
+      position: { 
+        centered: true,
+        centerIn: 'building',
+        bay: 'A',
+        distance: 5,
+        from: 'left',
+        edgeOf: 'building'
+      },
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -138,11 +207,18 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   };
   
   const addWindow = (wall: string) => {
-    const updatedWalls = { ...data.walls };
+    const updatedWalls = JSON.parse(JSON.stringify(data.walls)); // Deep clone
     updatedWalls[wall].windows.push({
       dimensions: '3x4',
       sillHeight: 3,
-      position: { ...defaultPosition },
+      position: { 
+        centered: true,
+        centerIn: 'building',
+        bay: 'A',
+        distance: 5,
+        from: 'left',
+        edgeOf: 'building'
+      },
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -155,12 +231,19 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   };
   
   const addBayDoor = (wall: string) => {
-    const updatedWalls = { ...data.walls };
+    const updatedWalls = JSON.parse(JSON.stringify(data.walls)); // Deep clone
     updatedWalls[wall].bayDoors.push({
       type: 'roll-up',
       width: 10,
       height: 10,
-      position: { ...defaultPosition },
+      position: { 
+        centered: true,
+        centerIn: 'building',
+        bay: 'A',
+        distance: 5,
+        from: 'left',
+        edgeOf: 'building'
+      },
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -173,11 +256,18 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   };
   
   const addOpening = (wall: string) => {
-    const updatedWalls = { ...data.walls };
+    const updatedWalls = JSON.parse(JSON.stringify(data.walls)); // Deep clone
     updatedWalls[wall].openings.push({
       width: 4,
       height: 4,
-      position: { ...defaultPosition },
+      position: { 
+        centered: true,
+        centerIn: 'building',
+        bay: 'A',
+        distance: 5,
+        from: 'left',
+        edgeOf: 'building'
+      },
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -303,6 +393,7 @@ const WallOptions: React.FC<WallOptionsProps> = ({
           </Form.Select>
           
           {position.centerIn === 'bay' && (
+            
             <Form.Group className="mt-2">
               <Form.Label>Select Bay</Form.Label>
               <Form.Select
@@ -410,14 +501,15 @@ const WallOptions: React.FC<WallOptionsProps> = ({
           <Tab.Content>
             {Object.entries(data.walls).map(([wall, wallData]) => (
               <Tab.Pane key={wall} eventKey={wall}>
-                {/* Girts Section */}
+                {/* Girts Section with enhanced controls */}
                 <Card className="mb-3">
                   <Card.Header>
                     <h5>Girts (Purlins)</h5>
                   </Card.Header>
                   <Card.Body>
-                    <Row>
-                      <Col md={6}>
+                    {/* Girt Size with Apply to All and Lock */}
+                    <Row className="mb-3 align-items-end">
+                      <Col md={4}>
                         <Form.Group>
                           <Form.Label>Size</Form.Label>
                           <Form.Select
@@ -431,10 +523,134 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                           </Form.Select>
                         </Form.Group>
                       </Col>
+                      <Col md={3}>
+                        <Button 
+                          size="sm" 
+                          variant="outline-secondary"
+                          onClick={() => applyToAllWalls(wall, 'girts.size')}
+                        >
+                          Apply to All Walls
+                        </Button>
+                      </Col>
+                      <Col md={2}>
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`lock-girt-size-${wall}`}
+                            checked={wallData.girts.sizeLocked}
+                            onChange={(e) => updateWallField(wall, 'girts.sizeLocked', e.target.checked)}
+                          />
+                          <label className="form-check-label" htmlFor={`lock-girt-size-${wall}`}>
+                            Lock
+                          </label>
+                        </div>
+                      </Col>
+                    </Row>
+                    
+                    {/* Girt Spacing with Apply to All and Lock */}
+                    <Row className="mb-3 align-items-end">
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Spacing (ft)</Form.Label>
+                          <Form.Control
+                            type="number"
+                            min={1}
+                            max={10}
+                            step={0.5}
+                            value={wallData.girts.spacing}
+                            size="sm"
+                            onChange={(e) => updateWallField(wall, 'girts.spacing', parseFloat(e.target.value))}
+                          />
+                          <Form.Text className="text-muted">
+                            Distance between each girt
+                          </Form.Text>
+                        </Form.Group>
+                      </Col>
+                      <Col md={3}>
+                        <Button 
+                          size="sm" 
+                          variant="outline-secondary"
+                          onClick={() => applyToAllWalls(wall, 'girts.spacing')}
+                        >
+                          Apply to All Walls
+                        </Button>
+                      </Col>
+                      <Col md={2}>
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`lock-girt-spacing-${wall}`}
+                            checked={wallData.girts.spacingLocked}
+                            onChange={(e) => updateWallField(wall, 'girts.spacingLocked', e.target.checked)}
+                          />
+                          <label className="form-check-label" htmlFor={`lock-girt-spacing-${wall}`}>
+                            Lock
+                          </label>
+                        </div>
+                      </Col>
+                    </Row>
+                    
+                    {/* Max Gap with Apply to All and Lock */}
+                    <Row className="mb-3 align-items-end">
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Max Gap (ft)</Form.Label>
+                          <Form.Control
+                            type="number"
+                            min={1}
+                            max={10}
+                            step={0.5}
+                            value={wallData.girts.maxGap}
+                            size="sm"
+                            onChange={(e) => updateWallField(wall, 'girts.maxGap', parseFloat(e.target.value))}
+                          />
+                          <Form.Text className="text-muted">
+                            Maximum acceptable gap between top girt and eave
+                          </Form.Text>
+                        </Form.Group>
+                      </Col>
+                      <Col md={3}>
+                        <Button 
+                          size="sm" 
+                          variant="outline-secondary"
+                          onClick={() => applyToAllWalls(wall, 'girts.maxGap')}
+                        >
+                          Apply to All Walls
+                        </Button>
+                      </Col>
+                      <Col md={2}>
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`lock-girt-maxgap-${wall}`}
+                            checked={wallData.girts.maxGapLocked}
+                            onChange={(e) => updateWallField(wall, 'girts.maxGapLocked', e.target.checked)}
+                          />
+                          <label className="form-check-label" htmlFor={`lock-girt-maxgap-${wall}`}>
+                            Lock
+                          </label>
+                        </div>
+                      </Col>
+                    </Row>
+                    
+                    {/* Girt Position Preview */}
+                    <Row>
+                      <Col>
+                        <div className="girt-preview p-2 border rounded bg-light">
+                          <strong>Girt Positions: </strong>
+                          {calculateGirtPositions(buildingHeight, wallData.girts.spacing, wallData.girts.maxGap)
+                            .map(pos => pos.toFixed(1))
+                            .join(', ')} ft
+                        </div>
+                      </Col>
                     </Row>
                   </Card.Body>
                 </Card>
-
+                
+                {/* Rest of your existing wall options components... */}
                 {/* Walk Doors Section */}
                 <Card className="mb-3">
                   <Card.Header className="d-flex justify-content-between align-items-center">

@@ -438,17 +438,17 @@ export function generateMaterialTakeoff(data: BuildingData): string {
 
   return `
 Material Takeoff for Gabled Roof:
-- Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span.
-- Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with 2" added to gable hypotenuse).
-- Note: Roof purlins are 5 per side of the gabled roof, totaling ${totalPurlinLines} lines, split at middle rafter.
-- Note: Wall girts are split at column positions.
-- Note: Sidewall girts are positioned at 5' and 10'; sidewall panels are fastened to base angle, 5' girt, 10' girt, and eave strut.
-- Note: Gabled end wall girts are positioned at 5' spacing from the base, with the final girt at eave height (${height}'); additional girt added if peak distance exceeds 7'; girts do not span between roll-up door jambs unless above the header (10').
-- Note: Each gabled endwall has a center column unless there is a roll-up door interfering with the center position. Wall girts terminate at door jambs and are secured with welded tabs.
-- Note: Roll-up doors on gabled end walls: single door is centered; two or more doors are spaced equally between sidewalls and each other for uniform visible panel spacing (rounded to nearest inch).
-- Note: Man door header purlins span the full bay length; no purlins used as jambs for man doors.
-- Note: Window framing purlins are for top and bottom, spanning the full bay length.
-- Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
+// - Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span.
+// - Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with 2" added to gable hypotenuse).
+// - Note: Roof purlins are 5 per side of the gabled roof, totaling ${totalPurlinLines} lines, split at middle rafter.
+// - Note: Wall girts are split at column positions.
+// - Note: Sidewall girts are positioned at 5' and 10'; sidewall panels are fastened to base angle, 5' girt, 10' girt, and eave strut.
+// - Note: Gabled end wall girts are positioned at 5' spacing from the base, with the final girt at eave height (${height}'); additional girt added if peak distance exceeds 7'; girts do not span between roll-up door jambs unless above the header (10').
+// - Note: Each gabled endwall has a center column unless there is a roll-up door interfering with the center position. Wall girts terminate at door jambs and are secured with welded tabs.
+// - Note: Roll-up doors on gabled end walls: single door is centered; two or more doors are spaced equally between sidewalls and each other for uniform visible panel spacing (rounded to nearest inch).
+// - Note: Man door header purlins span the full bay length; no purlins used as jambs for man doors.
+// - Note: Window framing purlins are for top and bottom, spanning the full bay length.
+// - Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
 - Columns (I-beams): ${totalColumnsWithCenters} @ ${toFeetAndInches(height)} each
 - Rafters (I-beams): ${totalRafters} @ ${toFeetAndInches(slopeLengthPerSide)} each
 - Roof Purlins: ${totalPurlinPieces} @ ${toFeetAndInches(purlinLength)} each

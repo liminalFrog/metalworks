@@ -166,6 +166,8 @@ details {
   &.form-select-sm, &.form-control-sm {
     height: calc(1.5em + 0.5rem + 2px);
   }
+
+  margin-bottom: 0.25rem;
 }
 
 .nav-tabs {
@@ -264,4 +266,42 @@ details {
     color: #6c757d;
     font-size: 1rem;
   }
+}
+
+// Styling for the girt preview box
+.girt-preview {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  
+  strong {
+    color: #495057;
+  }
+}
+
+// Make lock checkboxes align better
+.form-check {
+  display: flex;
+  align-items: center;
+  
+  .form-check-input {
+    margin-top: 0;
+    margin-right: 0.5rem;
+  }
+  
+  .form-check-label {
+    margin-bottom: 0;
+  }
+}
+
+// Improve button alignment and sizing
+.btn-outline-secondary {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+// Make form text smaller and more subtle
+.form-text {
+  font-size: 0.75rem;
+  margin-top: 0.1rem;
 }

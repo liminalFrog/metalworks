@@ -8,43 +8,47 @@ import MaterialTakeoff from './components/MaterialTakeoff';
 import { generateMaterialTakeoff } from './calculations';
 import './styles/App.scss';
 
-// Default wall configuration template
-const defaultWallConfig = {
-  girts: {
-    size: 'C2x6',
-    spacing: [5, 10]
-  },
-  doors: [],
-  windows: [],
-  bayDoors: [],
-  openings: [],
-  awning: {
-    enabled: false,
-    height: 8,
-    width: 10,
-    spanWall: false,
-    length: 6,
-    position: {
-      centered: true,
-      centerIn: 'building',
-      bay: 'A',
-      distance: 5,
-      from: 'left',
-      edgeOf: 'building'
-    },
-    wraparound: 'none',
-    pitch: 1,
-    postType: '4x4x14ga'
-  },
-  roofExtension: {
-    enabled: false,
-    width: 4,
-    dropWalls: 'none',
-    wallHeight: 4
-  }
-};
-
 function App() {
+  // Create a function to generate a fresh wall config to avoid reference issues
+  const createWallConfig = () => ({
+    girts: {
+      size: 'C2x6',
+      sizeLocked: false,
+      spacing: 5,
+      spacingLocked: false,
+      maxGap: 6,
+      maxGapLocked: false
+    },
+    doors: [],
+    windows: [],
+    bayDoors: [],
+    openings: [],
+    awning: {
+      enabled: false,
+      height: 8,
+      width: 10,
+      spanWall: false,
+      length: 6,
+      position: {
+        centered: true,
+        centerIn: 'building',
+        bay: 'A',
+        distance: 5,
+        from: 'left',
+        edgeOf: 'building'
+      },
+      wraparound: 'none',
+      pitch: 1,
+      postType: '4x4x14ga'
+    },
+    roofExtension: {
+      enabled: false,
+      width: 4,
+      dropWalls: 'none',
+      wallHeight: 4
+    }
+  });
+
   const [buildingData, setBuildingData] = useState({
     // Building dimensions
     length: 40,
@@ -61,12 +65,12 @@ function App() {
     trimColor: 'lightGray',
     roofColor: 'galvalume',
     
-    // Wall options (per wall)
+    // Wall options (per wall) - use function to create fresh copies
     walls: {
-      north: { ...defaultWallConfig },
-      east: { ...defaultWallConfig },
-      south: { ...defaultWallConfig },
-      west: { ...defaultWallConfig }
+      north: createWallConfig(),
+      east: createWallConfig(),
+      south: createWallConfig(),
+      west: createWallConfig()
     },
     
     // Legacy options for compatibility
@@ -84,17 +88,29 @@ function App() {
   const [materialTakeoff, setMaterialTakeoff] = useState('');
   const [appLoading, setAppLoading] = useState(true);
 
+  // Update this function to properly handle nested updates
+  const updateField = (field: string, value: any) => {
+    setBuildingData(prev => {
+      // Make a deep copy for the walls to ensure each wall's settings remain independent
+      if (field === 'walls') {
+        return {
+          ...prev,
+          walls: value  // This is already a new object from WallOptions
+        };
+      }
+      
+      // For other fields
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const takeoff = generateMaterialTakeoff(buildingData);
     setMaterialTakeoff(takeoff);
-  };
-
-  const updateField = (field: string, value: any) => {
-    setBuildingData(prev => ({
-      ...prev,
-      [field]: value
-    }));
   };
 
   // Handle initial app loading

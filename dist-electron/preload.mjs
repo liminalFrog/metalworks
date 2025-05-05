@@ -1,5 +1,14 @@
 "use strict";
 const electron = require("electron");
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("MetalWorks is ready!");
+  const fileToOpen = window.fileToOpen;
+  if (fileToOpen) {
+    document.dispatchEvent(
+      new CustomEvent("file-to-open", { detail: fileToOpen })
+    );
+  }
+});
 electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {
     const [channel, listener] = args;
@@ -19,4 +28,8 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   }
   // You can expose other APTs you need here.
   // ...
+});
+electron.contextBridge.exposeInMainWorld("metalworks", {
+  // Add any functions you want to expose to the renderer
+  version: process.versions.electron
 });

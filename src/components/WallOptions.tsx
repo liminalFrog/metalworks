@@ -26,12 +26,14 @@ interface WallOptionsProps {
         doors: {
           dimensions: string;
           position: PositionConfig;
+          subtractInsulation: boolean;
           id: string;
         }[];
         windows: {
           dimensions: string;
           sillHeight: number;
           position: PositionConfig;
+          subtractInsulation: boolean;
           id: string;
         }[];
         bayDoors: {
@@ -39,12 +41,14 @@ interface WallOptionsProps {
           width: number;
           height: number;
           position: PositionConfig;
+          subtractInsulation: boolean;
           id: string;
         }[];
         openings: {
           width: number;
           height: number;
           position: PositionConfig;
+          subtractInsulation: boolean;
           id: string;
         }[];
         awning: {
@@ -73,6 +77,10 @@ interface WallOptionsProps {
   buildingHeight: number;
   roofType: string;
   bays: number;
+  insulation?: {
+    enabled: boolean;
+    type: 'spray' | 'batt';
+  };
 }
 
 const defaultPosition: PositionConfig = {
@@ -91,7 +99,8 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   buildingLength,
   buildingHeight,
   roofType,
-  bays
+  bays,
+  insulation = { enabled: false, type: 'batt' }
 }) => {
   const [activeWall, setActiveWall] = useState('north');
   
@@ -195,6 +204,7 @@ const WallOptions: React.FC<WallOptionsProps> = ({
         from: 'left',
         edgeOf: 'building'
       },
+      subtractInsulation: insulation.type === 'spray',
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -209,7 +219,7 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   const addWindow = (wall: string) => {
     const updatedWalls = JSON.parse(JSON.stringify(data.walls)); // Deep clone
     updatedWalls[wall].windows.push({
-      dimensions: '3x4',
+      dimensions: '3x3',
       sillHeight: 3,
       position: { 
         centered: true,
@@ -219,6 +229,7 @@ const WallOptions: React.FC<WallOptionsProps> = ({
         from: 'left',
         edgeOf: 'building'
       },
+      subtractInsulation: insulation.type === 'spray',
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -244,6 +255,7 @@ const WallOptions: React.FC<WallOptionsProps> = ({
         from: 'left',
         edgeOf: 'building'
       },
+      subtractInsulation: true,
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -268,6 +280,7 @@ const WallOptions: React.FC<WallOptionsProps> = ({
         from: 'left',
         edgeOf: 'building'
       },
+      subtractInsulation: true,
       id: generateId()
     });
     updateField('walls', updatedWalls);
@@ -276,6 +289,12 @@ const WallOptions: React.FC<WallOptionsProps> = ({
   const removeOpening = (wall: string, index: number) => {
     const updatedWalls = { ...data.walls };
     updatedWalls[wall].openings.splice(index, 1);
+    updateField('walls', updatedWalls);
+  };
+
+  const updateSubtractInsulation = (wall: string, elementType: string, index: number, value: boolean) => {
+    const updatedWalls = JSON.parse(JSON.stringify(data.walls));
+    updatedWalls[wall][elementType][index].subtractInsulation = value;
     updateField('walls', updatedWalls);
   };
   
@@ -685,6 +704,15 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                             </Col>
                           </Row>
                           
+                          <Form.Check 
+                            type="checkbox"
+                            id={`door-${wall}-${index}-subtract-insulation`}
+                            label="Subtract from Insulation"
+                            checked={door.subtractInsulation || false}
+                            onChange={(e) => updateSubtractInsulation(wall, 'doors', index, e.target.checked)}
+                            className="mt-2"
+                          />
+                          
                           <hr />
                           <h6>Positioning</h6>
                           <PositioningOptions 
@@ -743,6 +771,15 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                               </Form.Group>
                             </Col>
                           </Row>
+                          
+                          <Form.Check 
+                            type="checkbox"
+                            id={`window-${wall}-${index}-subtract-insulation`}
+                            label="Subtract from Insulation"
+                            checked={window.subtractInsulation || false}
+                            onChange={(e) => updateSubtractInsulation(wall, 'windows', index, e.target.checked)}
+                            className="mt-2"
+                          />
                           
                           <Row>
                             <Col className="d-flex justify-content-end">
@@ -890,6 +927,15 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                               </Form.Group>
                             </Col>
                           </Row>
+                          
+                          <Form.Check 
+                            type="checkbox"
+                            id={`opening-${wall}-${index}-subtract-insulation`}
+                            label="Subtract from Insulation"
+                            checked={opening.subtractInsulation || false}
+                            onChange={(e) => updateSubtractInsulation(wall, 'openings', index, e.target.checked)}
+                            className="mt-2"
+                          />
                           
                           <Row>
                             <Col className="d-flex justify-content-end">

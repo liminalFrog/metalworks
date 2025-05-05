@@ -1,7 +1,6 @@
 @import "bootstrap/scss/bootstrap";
 
 body {
-  padding-top: 10px;
   padding-bottom: 20px;
   overflow: hidden;
 }
@@ -83,6 +82,18 @@ h4 {
   &:hover, &:focus {
     background-color: #bb2d3b;
     border-color: #b02a37;
+  }
+}
+
+.btn {
+  transition: none !important;
+  animation: none !important;
+  &:hover {
+    translate: 0 -1px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
+  }
+  &:active {
+    translate: 0 0;
   }
 }
 
@@ -304,4 +315,196 @@ details {
 .form-text {
   font-size: 0.75rem;
   margin-top: 0.1rem;
+}
+
+// Sticky header for material takeoff
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding-right: 1rem;
+}
+
+// Button group styling
+.btn-group {
+  .btn {
+    border-radius: 0.25rem;
+    margin-left: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+}
+
+// Menu bar styling
+.app-menubar {
+  border-bottom: 1px solid #dee2e6;
+  padding: 0.25rem 0;
+  
+  .navbar-brand {
+    font-size: 1.1rem;
+    font-weight: 500;
+  }
+  
+  .nav-link {
+    padding: 0 0.4rem !important;
+    margin: 0.1rem 0;
+    font-size: 0.9rem;
+    color: #212529;
+    
+    &:hover, &:focus {
+      background-color: #f1f3f5;
+      color: #212529;
+    }
+  }
+  
+  .nav-item.show .nav-link,
+  .nav-link.active {
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    border-color: #dee2e6 !important;
+  }
+  
+  .dropdown-toggle::after {
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+  
+  .dropdown-menu {
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+    
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      &:hover, &:focus, &:active {
+        background-color: #e9ecef;
+        color: #212529;
+      }
+      
+      .shortcut {
+        color: #6c757d;
+        font-size: 0.8rem;
+        margin-left: 1.5rem;
+      }
+    }
+  }
+}
+
+// Override Bootstrap's default blue color for dropdown
+.dropdown-item.active, 
+.dropdown-item:active {
+  background-color: #e9ecef !important;
+  color: #212529 !important;
+}
+
+// Also fix the nav padding issue
+#file-dropdown {
+  padding: 0.5rem 1rem;
+
+  .dropdown-item {
+    &.dropdown-toggle::after {
+      margin-left: auto;
+    }
+  }
+}
+
+// Styling for nested dropdowns
+.dropdown-submenu {
+  position: relative;
+  
+  .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+  }
+}
+
+// Ensure all dropdown items have consistent styling
+#recent-files-dropdown {
+  &.dropdown-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    color: #212529;
+    background-color: transparent;
+    text-align: inherit;
+    white-space: nowrap;
+    border: 0;
+    width: 100%;
+    
+    &::after {
+      margin-left: auto;
+    }
+
+    &:hover, &:focus, &:active {
+      background-color: #e9ecef;
+      color: #212529;
+      text-decoration: none;
+    }
+  }
+}
+
+// Override any potential nav styles for dropdowns
+.dropdown-item.nav-link {
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  color: #212529 !important;
+  background-color: transparent !important;
+  
+  &:hover, &:focus, &:active {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+  }
+}
+
+// Make vh-100 take into account the menubar
+.vh-100 {
+  height: calc(100vh - 56px) !important; // Adjust based on your menu height
+}
+
+// Make sure modals are on top
+.modal {
+  z-index: 2000;
+}
+
+// Insulation summary styling
+.insulation-summary {
+  font-size: 0.9rem;
+  
+  h6 {
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .table {
+    margin-bottom: 0;
+    
+    td {
+      padding: 0.25rem;
+      border: none;
+    }
+    
+    .text-end {
+      text-align: right;
+    }
+  }
+}
+
+// Add to your App.scss file if not already present
+.color-preview {
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
 }

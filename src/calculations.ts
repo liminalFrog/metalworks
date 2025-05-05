@@ -9,6 +9,7 @@ export interface BuildingData {
   rollUpDoors: { width: number; height: number }[];
   windows: { width: number; height: number }[];
   awnings: { width: number; height: number }[];
+  panelType?: string;
 }
 
 // Function to convert decimal feet to feet and inches
@@ -22,14 +23,32 @@ export function toFeetAndInches(decimalFeet: number): string {
   return `${feet}'${inches}"`;
 }
 
+// Function to calculate wall panel area (placeholder, implement as needed)
+function calculateWallPanelArea(buildingData: BuildingData): number {
+  // Example calculation, replace with actual logic
+  return buildingData.length * buildingData.height * 2 + buildingData.width * buildingData.height * 2;
+}
+
 export function generateMaterialTakeoff(data: BuildingData): string {
-  const { length, width, height, pitch, bays, gutters: guttersOption } = data;
+  const { length, width, height, pitch, bays, gutters: guttersOption, panelType } = data;
   const manDoors = data.manDoors || [];
   const rollUpDoors = data.rollUpDoors || [];
   const windows = data.windows || [];
   const awnings = data.awnings || [];
   const panelWidth = 3; // Standard panel width
-  
+
+  // Panel waste factor based on panel type
+  const panelWasteFactor = {
+    'r-panel': 0.05,      // 5% waste
+    'pbr': 0.06,          // 6% waste
+    'u-panel': 0.05,      // 5% waste
+    'standing-seam': 0.08, // 8% waste due to more complex installation
+    'corrugated': 0.04,    // 4% waste
+  }[panelType || ''] || 0.05; // Default to 5% if unknown
+
+  // Use this factor in your square footage calculations
+  const wallPanelSqFt = calculateWallPanelArea(data) * (1 + panelWasteFactor);
+
   // Calculate slope multiplier for gabled roof (per side)
   const runPerSide = width / 2; // Horizontal run per side
   const risePerSide = (pitch / 12) * runPerSide; // Vertical rise per side

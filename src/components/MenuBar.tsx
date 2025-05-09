@@ -181,8 +181,8 @@ const MenuBar: React.FC<MenuBarProps> = ({
 
   return (
     <>
-      <Navbar bg="light" expand="lg" className="app-menubar py-0 px-2 nav-pills">
-        <Navbar.Brand className="ms-2 font-monospace text-secondary py-0">
+      <Navbar expand="lg" className="app-menubar py-0 px-2 nav-pills">
+        <Navbar.Brand className="ms-2 font-monospace py-0">
           {documentName ? (
             <>
               {isDocumentModified && '*'}{documentName}

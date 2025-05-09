@@ -181,8 +181,14 @@ const MenuBar: React.FC<MenuBarProps> = ({
 
   return (
     <>
-      <Navbar expand="lg" className="app-menubar py-0 px-2 nav-pills">
-        <Navbar.Brand className="ms-2 font-monospace py-0">
+      <Navbar expand="lg" className="app-menubar py-0 px-2 nav-pills"
+        style={{
+          backgroundColor: '#f8f9fa', 
+          borderBottom: '1px solid #dee2e6',
+          fontSize: '12px',
+        }}
+      >
+        {/* <Navbar.Brand className="ms-2 font-monospace py-0">
           {documentName ? (
             <>
               {isDocumentModified && '*'}{documentName}
@@ -190,10 +196,10 @@ const MenuBar: React.FC<MenuBarProps> = ({
           ) : (
             <></>
           )}
-        </Navbar.Brand>
+        </Navbar.Brand> */}
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
+          <Nav className="me-auto py-0">
             <NavDropdown title="File" id="file-dropdown">
               <NavDropdown.Item onClick={() => handleAction('new')}>
                 New <span className="shortcut">Ctrl+N</span>

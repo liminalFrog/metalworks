@@ -2,7 +2,8 @@ export interface BuildingData {
   length: number;
   width: number;
   height: number;
-  pitch: number;
+  pitch?: number;      // For backwards compatibility
+  roofPitch?: number;  // Currently used in App.tsx
   bays: number;
   gutters: string;
   manDoors: { width: number; height: number }[];
@@ -10,10 +11,18 @@ export interface BuildingData {
   windows: { width: number; height: number }[];
   awnings: { width: number; height: number }[];
   panelType?: string;
+  roofOverhang?: number; // Amount to add to roof panel length (in inches)
+  roofPeakGap?: number;  // Gap to leave at peak (in inches)
 }
 
 // Function to convert decimal feet to feet and inches
 export function toFeetAndInches(decimalFeet: number): string {
+  // Add validation to handle NaN or undefined values
+  if (decimalFeet === undefined || isNaN(decimalFeet)) {
+    console.warn('Invalid value passed to toFeetAndInches:', decimalFeet);
+    return '0\'';
+  }
+  
   const feet = Math.floor(decimalFeet);
   const decimalPart = decimalFeet - feet;
   const inches = Math.round(decimalPart * 12);
@@ -30,7 +39,10 @@ function calculateWallPanelArea(buildingData: BuildingData): number {
 }
 
 export function generateMaterialTakeoff(data: BuildingData): string {
-  const { length, width, height, pitch, bays, gutters: guttersOption, panelType } = data;
+  // Extract pitch from data.pitch or data.roofPitch for compatibility
+  const pitch = data.pitch || data.roofPitch || 3; // Default to 3 if not found
+  
+  const { length, width, height, bays, gutters: guttersOption, panelType } = data;
   const manDoors = data.manDoors || [];
   const rollUpDoors = data.rollUpDoors || [];
   const windows = data.windows || [];
@@ -47,16 +59,48 @@ export function generateMaterialTakeoff(data: BuildingData): string {
   }[panelType || ''] || 0.05; // Default to 5% if unknown
 
   // Use this factor in your square footage calculations
-  const wallPanelSqFt = calculateWallPanelArea(data) * (1 + panelWasteFactor);
-
-  // Calculate slope multiplier for gabled roof (per side)
-  const runPerSide = width / 2; // Horizontal run per side
-  const risePerSide = (pitch / 12) * runPerSide; // Vertical rise per side
-  const slopeLengthPerSide = Math.sqrt(runPerSide ** 2 + risePerSide ** 2); // Sloped length per side
+  const wallPanelSqFt = calculateWallPanelArea(data) * (1 + panelWasteFactor);  // Calculate slope multiplier for gabled roof (per side)
+  const runPerSide = width / 2 || 0; // Horizontal run per side, default to 0 if not defined
+  const risePerSide = ((pitch || 0) / 12) * runPerSide; // Vertical rise per side
+  let slopeLengthPerSide = 0;
+  try {
+    slopeLengthPerSide = Math.sqrt(runPerSide ** 2 + risePerSide ** 2); // Sloped length per side
+  } catch (error) {
+    console.error('Error calculating slope length:', error);
+    slopeLengthPerSide = Math.max(runPerSide, 10);
+  }
+  
   const totalSlopeLength = slopeLengthPerSide * 2; // Total sloped length (for reference)
-
-  // Add 2 inches (2/12 feet) to roof panel length
-  const roofPanelLength = slopeLengthPerSide + (2 / 12); // Add 2 inches
+  
+  // Apply overhang and peak gap adjustments to roof panel length
+  const overhangInches = data.roofOverhang !== undefined ? data.roofOverhang : 2;
+  const peakGapInches = data.roofPeakGap !== undefined ? data.roofPeakGap : 1;
+  
+  // Initialize roofPanelLength in the outer scope
+  let roofPanelLength: number = 0;
+  
+  try {
+    // Validate inputs before calculation
+    if (isNaN(slopeLengthPerSide) || isNaN(overhangInches) || isNaN(peakGapInches)) {
+      console.error('Invalid values for roof panel length calculation:', {
+        slopeLengthPerSide,
+        overhangInches,
+        peakGapInches
+      });
+      // Provide a fallback value based on building dimensions
+      roofPanelLength = Math.max(10, width / 2); // Fallback to half width or minimum 10'
+    } else {
+      roofPanelLength = slopeLengthPerSide + (overhangInches / 12) - (peakGapInches / 24); // Add overhang, subtract half of peak gap
+    }
+  } catch (error) {
+    console.error('Error calculating roof panel length:', error);
+    roofPanelLength = Math.max(10, width / 2); // Fallback to half width or minimum 10'
+  }
+  
+  // Final validation to ensure we have a valid number
+  if (isNaN(roofPanelLength) || !isFinite(roofPanelLength)) {
+    roofPanelLength = 20; // Last resort fallback
+  }
 
   // Gabled roof height calculations
   const ridgeHeight = height + risePerSide; // Height at the ridge
@@ -126,14 +170,13 @@ export function generateMaterialTakeoff(data: BuildingData): string {
   if (centerColumnsBack === 0) {
     // Each girt level needs two tabs per door (left and right side)
     weldedTabsNeeded += wallGirtsPerSideHeightEndwall * 2 * rollUpDoorsBack.length;
-  }
-
-  // Purlins (5' spacing, 5 per side of gabled roof)
-  const purlinsPerSide = Math.ceil(slopeLengthPerSide / 5); // 5 purlins per side
-  const totalPurlinLines = purlinsPerSide * 2; // Total purlin lines (10)
-  const purlinSegmentsPerLine = bays; // Each line split into 2 segments (20' each)
-  const totalPurlinPieces = totalPurlinLines * purlinSegmentsPerLine; // 10 lines * 2 = 20 pieces
-  const purlinLength = bayLength; // Each piece is 20' long
+  }  // Purlins (5' spacing along the slope)
+  const purlinsPerSide = Math.ceil(slopeLengthPerSide / 5); // Calculate purlins based on sloped length
+  const totalPurlinLines = purlinsPerSide * 2; // Total purlin lines (both sides of roof)
+  const purlinSegmentsPerLine = bays; // Each line split at rafters
+  const totalPurlinPieces = totalPurlinLines * purlinSegmentsPerLine; // Total number of purlin pieces
+  // For roof purlins and other horizontal elements
+  const purlinLength = bayLength; // Horizontal purlins use standard bay length
 
   // Wall girts (sidewalls: fixed at 5' and 10'; gabled end walls: 5' spacing from base, final girt at eave height, additional girt if peak distance > 7')
   const wallGirtsPerSideHeightSidewall = 2; // Fixed at 5' and 10' for sidewalls
@@ -373,9 +416,9 @@ export function generateMaterialTakeoff(data: BuildingData): string {
   awnings.forEach(() => {
     awningFrames += 3; // Two sides and one front frame per awning
   });
-
   // TEK Screws for fastening panels to purlins/girts
-  const tekScrewsRoof = length * totalPurlinLines; // Span = building length (40'), purlins = 10 lines
+  // Calculate TEK screws based on actual sloped roof area (length * slopeLengthPerSide * 2 sides)
+  const tekScrewsRoof = Math.ceil(length * totalPurlinLines * (slopeLengthPerSide / (width / 2))); // Adjust by slope factor
   const sidewallFasteningPoints = 4; // Base angle, 5' girt, 10' girt, eave strut
   const tekScrewsSidewall = length * sidewallFasteningPoints; // Span = building length (40'), fastening points = 4 (base angle, 5', 10', eave strut)
   const totalWallTekScrews = tekScrewsSidewall;
@@ -457,9 +500,9 @@ export function generateMaterialTakeoff(data: BuildingData): string {
 
   return `
 Material Takeoff for Gabled Roof:
-// - Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span.
-// - Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with 2" added to gable hypotenuse).
-// - Note: Roof purlins are 5 per side of the gabled roof, totaling ${totalPurlinLines} lines, split at middle rafter.
+// - Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span, creating a slope length of ${toFeetAndInches(slopeLengthPerSide)} per side.
+// - Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with ${overhangInches}" overhang added and ${peakGapInches}" gap at peak).
+// - Note: Roof purlins are spaced approximately 5' apart along the sloped roof surface, with ${purlinsPerSide} purlins per side, totaling ${totalPurlinLines} lines, split at each rafter.
 // - Note: Wall girts are split at column positions.
 // - Note: Sidewall girts are positioned at 5' and 10'; sidewall panels are fastened to base angle, 5' girt, 10' girt, and eave strut.
 // - Note: Gabled end wall girts are positioned at 5' spacing from the base, with the final girt at eave height (${height}'); additional girt added if peak distance exceeds 7'; girts do not span between roll-up door jambs unless above the header (10').
@@ -470,11 +513,11 @@ Material Takeoff for Gabled Roof:
 // - Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
 - Columns (I-beams): ${totalColumnsWithCenters} @ ${toFeetAndInches(height)} each
 - Rafters (I-beams): ${totalRafters} @ ${toFeetAndInches(slopeLengthPerSide)} each
-- Roof Purlins: ${totalPurlinPieces} @ ${toFeetAndInches(purlinLength)} each
+- Roof Purlins: ${totalPurlinPieces} @ ${toFeetAndInches(purlinLength)} each (${purlinsPerSide} purlins per roof side, based on slope length of ${toFeetAndInches(slopeLengthPerSide)})
 - Wall Girts: ${totalGirtPieces} @ ${toFeetAndInches(girtLength)} each
 ${baseAnglePerimeterOutput}
 ${baseAngleGabledOutput}
-- Roof Panels: ${roofPanels} @ ${toFeetAndInches(roofPanelLength)} each
+- Roof Panels (${panelType || 'R-Panel'}): ${roofPanels} @ ${toFeetAndInches(roofPanelLength)} each
 ${ridgeRollOutput}${panelClosuresOutput}
 ${peakBoxesOutput}
 ${rakeTrimOutput}

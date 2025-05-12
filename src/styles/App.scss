@@ -1,5 +1,9 @@
 @import "bootstrap/scss/bootstrap";
 
+:root {
+  font-size: 13px;
+}
+
 // Add these styles for native-looking toolbar
 // Near the top of your file or replace existing menubar styles
 
@@ -54,8 +58,8 @@ h4 {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   
   .card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    background-color: #cfcfcf;
+    border-bottom: 1px solid #a0a3a7;
     padding: 0.5rem 1rem;
     
     h4, h5 {
@@ -73,6 +77,19 @@ h4 {
     .table {
       margin-bottom: 0;
     }
+  }
+}
+
+// Additional styles for accordion inside cards
+.card .accordion {
+  .accordion-item {
+    border: 1px solid #6c8ca7;
+    margin-bottom: 0.5rem;
+  }
+  
+  .accordion-body {
+    padding: 1rem;
+    background-color: #f8f9fa;
   }
 }
 
@@ -116,22 +133,82 @@ h4 {
   }
 }
 
-.btn {
+.form-control, .form-select, .form-check-input {
+  border-color: #6c8ca7 !important;
+}
+.form-control:hover, .form-select:hover, .nav-tabs .nav-link:hover, .form-check-input:hover {
+  border-color: #0078d7 !important;
+  box-shadow: inset 0 0 0 0.2rem rgba(0, 120, 215, 0.25) !important;
+}
+
+.btn, .form-check-input:checked {
   transition: none !important;
   animation: none !important;
   font-size: 14px;
   border-radius: 4px;
-  &:hover {
-    translate: 0 -1px;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
-  }
-  &:active {
-    translate: 0 0;
-  }
+  box-shadow:
+  inset 0 0 6px rgba(255, 255, 255, 0.25), // inner glow
+    inset 0 1px 0 rgba(255, 255, 255, 0.3), // top highlight
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3), // bottom shadow
+    inset 1px 0 0 rgba(255, 255, 255, 0.2), // right highlight
+    inset -1px 0 0 rgba(255, 255, 255, 0.2); // left highlight
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4) !important;
   &:focus {
     outline: 1px dotted;
     outline-offset: -1px;
   }
+}
+.btn:active {
+  translate: 0 1px;
+}
+
+.btn:focus, .form-check-input:focus, .form-control:focus, .form-select:focus, .accordion-button:focus {
+  border-color:#1696ff !important;
+  box-shadow: inset 0 0 0 0.2rem rgba(58, 209, 255, 0.25) !important;
+}
+
+// Accordion styling to match buttons
+.accordion-button {
+  transition: none !important;
+  animation: none !important;
+  font-size: 14px;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.25), // inner glow
+    inset 0 1px 0 rgba(255, 255, 255, 0.3), // top highlight
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3), // bottom shadow
+    inset 1px 0 0 rgba(255, 255, 255, 0.2), // right highlight
+    inset -1px 0 0 rgba(255, 255, 255, 0.2); // left highlight
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4) !important;
+  padding: 0.5rem 1rem;
+  background-color: #f0f0f0;
+  
+  &:focus {
+    outline: 1px dotted;
+    outline-offset: -1px;
+  }
+  
+  &:active {
+    translate: 0 1px;
+  }
+  
+  &:not(.collapsed) {
+    color: inherit;
+    background-color: #e6e6e6;
+  }
+  
+  &::after {
+    width: 14px;
+    height: 14px;
+    background-size: 14px;
+  }
+}
+
+.accordion-item {
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  border: 1px solid #6c8ca7;
 }
 
 .table {

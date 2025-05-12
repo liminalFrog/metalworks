@@ -62,7 +62,7 @@ function App() {
     roofPitch: 3,
     purlins: {
       size: '2x6',
-      spacing: 4,
+      spacing: 5,
       maxGap: 6
     },
     insulation: {
@@ -70,6 +70,8 @@ function App() {
       type: 'batt'
     },
     panelType: 'r-panel',
+    roofOverhang: 2,  // 2" overhang by default
+    roofPeakGap: 1,   // 1" peak gap by default
     wallColor: 'white',
     trimColor: 'lightGray',
     roofColor: 'galvalume',
@@ -79,6 +81,29 @@ function App() {
       south: createWallConfig(),
       west: createWallConfig()
     },
+    structuralFrames: [
+      // North eave wall (first frame)
+      {
+        columnType: 'W',
+        columnSize: '8x10',
+        beamType: 'W',
+        beamSize: '8x10'
+      },
+      // Middle frame (Bay 1)
+      {
+        columnType: 'W',
+        columnSize: '10x22',
+        beamType: 'W',
+        beamSize: '10x22'
+      },
+      // South eave wall (last frame)
+      {
+        columnType: 'W',
+        columnSize: '8x10',
+        beamType: 'W',
+        beamSize: '8x10'
+      }
+    ],
     gutters: 'yes',
     manDoors: [{ width: 3, height: 7 }],
     rollUpDoors: [
@@ -433,7 +458,8 @@ function App() {
                   length: buildingData.length,
                   width: buildingData.width,
                   height: buildingData.height,
-                  bays: buildingData.bays
+                  bays: buildingData.bays,
+                  structuralFrames: buildingData.structuralFrames
                 }}
                 updateField={updateField}
               />

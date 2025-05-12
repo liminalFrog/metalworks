@@ -10,6 +10,9 @@ interface RoofOptionsProps {
       spacing: number;
       maxGap: number;
     };
+    panelType?: string;
+    roofOverhang?: number; // Amount to add to roof panel length (in inches)
+    roofPeakGap?: number;  // Gap to leave at peak (in inches)
   };
   updateField: (field: string, value: any) => void;
   buildingWidth?: number;  // Optional, to calculate purlin positions
@@ -17,6 +20,15 @@ interface RoofOptionsProps {
 
 const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWidth = 40 }) => {
   const pitchOptions = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8];
+  
+  // Panel type options
+  const panelTypes = [
+    { value: 'r-panel', label: 'R Panel' },
+    { value: 'pbr', label: 'PBR Panel' },
+    { value: 'u-panel', label: 'U Panel' },
+    { value: 'standing-seam', label: 'Standing Seam' },
+    { value: 'corrugated', label: 'Corrugated' },
+  ];
   
   // Calculate the roof span based on width and roof type
   const calculateRoofSpan = (): number => {
@@ -96,6 +108,60 @@ const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWi
           </Col>
         </Row>
         
+        {/* Roof Panel Options */}
+        <h5 className="mb-3">Roof Panel Options</h5>
+        <Row className="mb-4">
+          <Col md={4}>
+            <Form.Group controlId="panelType">
+              <Form.Label>Panel Type</Form.Label>
+              <Form.Select
+                value={data.panelType || 'r-panel'}
+                size="sm"
+                onChange={(e) => updateField('panelType', e.target.value)}
+                required
+              >
+                {panelTypes.map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="roofOverhang">
+              <Form.Label>Overhang (inches)</Form.Label>
+              <Form.Control
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={data.roofOverhang !== undefined ? data.roofOverhang : 2}
+                size="sm"
+                onChange={(e) => updateField('roofOverhang', parseFloat(e.target.value))}
+              />
+              <Form.Text className="text-muted">
+                Added to total panel length
+              </Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group controlId="roofPeakGap">
+              <Form.Label>Peak Gap (inches)</Form.Label>
+              <Form.Control
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={data.roofPeakGap !== undefined ? data.roofPeakGap : 1}
+                size="sm"
+                onChange={(e) => updateField('roofPeakGap', parseFloat(e.target.value))}
+              />
+              <Form.Text className="text-muted">
+                Gap to leave at ridge
+              </Form.Text>
+            </Form.Group>
+          </Col>
+        </Row>
+        
         {/* Divider between sections */}
         <hr className="my-4" />
         
@@ -152,7 +218,7 @@ const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWi
         </Row>
         
         {/* Purlin Position Preview */}
-        <Row>
+        <Row className="mb-4">
           <Col>
             <div className="purlin-preview p-2 border rounded bg-light">
               <strong>Purlin Positions: </strong>
@@ -170,6 +236,62 @@ const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWi
                 </div>
               )}
             </div>
+          </Col>
+        </Row>
+
+        {/* Divider between sections */}
+        <hr className="my-4" />
+
+        {/* Roof Panel Options */}
+        <h5 className="mb-3">Roof Panels</h5>
+        <Row className="mb-3">
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>Panel Type</Form.Label>
+              <Form.Select
+                value={data.panelType}
+                size="sm"
+                onChange={(e) => updateField('panelType', e.target.value)}
+              >
+                {panelTypes.map(panel => (
+                  <option key={panel.value} value={panel.value}>{panel.label}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>Overhang (inches)</Form.Label>
+              <Form.Control
+                type="number"
+                min={0}
+                max={24}
+                step={1}
+                value={data.roofOverhang || 0}
+                size="sm"
+                onChange={(e) => updateField('roofOverhang', parseInt(e.target.value, 10))}
+              />
+              <Form.Text className="text-muted">
+                Additional length to add to roof panels
+              </Form.Text>
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>Peak Gap (inches)</Form.Label>
+              <Form.Control
+                type="number"
+                min={0}
+                max={12}
+                step={0.5}
+                value={data.roofPeakGap || 0}
+                size="sm"
+                onChange={(e) => updateField('roofPeakGap', parseFloat(e.target.value))}
+              />
+              <Form.Text className="text-muted">
+                Gap to leave at the roof peak
+              </Form.Text>
+            </Form.Group>
           </Col>
         </Row>
       </Card.Body>

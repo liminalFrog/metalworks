@@ -10,7 +10,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-// Use contextBridge
-window.ipcRenderer.on('main-process-message', (_event, message) => {
-  console.log(message)
-})
+// Use ipcRenderer if it exists (for backwards compatibility)
+// This avoids errors if the preload script hasn't loaded yet
+if (window.ipcRenderer) {
+  window.ipcRenderer.on('main-process-message', (_event, message) => {
+    console.log(message)
+  })
+}

@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { ipcRenderer } from 'electron'
 
 // Called when DOM is fully loaded
 window.addEventListener('DOMContentLoaded', () => {
@@ -15,33 +15,12 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
-  },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
-  },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.send(channel, ...omit)
-  },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
-  },
+// --------- Make ipcRenderer directly available since we're using nodeIntegration: true ---------
+// Since contextIsolation is false, we'll make ipcRenderer directly accessible to the window object
+// rather than using contextBridge
+(window as any).ipcRenderer = ipcRenderer;
 
-  // You can expose other APTs you need here.
-  // ...
-});
-
-// Expose any needed APIs to the renderer process
-// Since you're using nodeIntegration: true, you likely don't need these
-// but they're here for future-proofing
-contextBridge.exposeInMainWorld('metalworks', {
-  // Add any functions you want to expose to the renderer
+// Add any additional utilities to the window object if needed
+(window as any).metalworks = {
   version: process.versions.electron
-});
+};

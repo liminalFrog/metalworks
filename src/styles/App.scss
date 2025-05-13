@@ -48,6 +48,59 @@ h4 {
   color: #343a40;
 }
 
+// Material takeoff styles
+.material-table {
+  th {
+    background-color: #f8f9fa;
+  }
+  
+  td:nth-child(2) {
+    text-align: center;
+    font-weight: 500;
+  }
+}
+
+.nav-pills .nav-link {
+  font-size: 0.9rem;
+  padding: .375rem .75rem;
+  border-radius: 20px;
+}
+
+.takeoff-category {
+  background-color: #f0f0f0;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.7rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.takeoff-category-inline {
+  font-size: 0.7rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.material-table-pagination {
+  .pagination {
+    margin-bottom: 0;
+    
+    .page-item {
+      .page-link {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+      }
+      
+      &.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+      }
+    }
+  }
+}
+
 .container {
   max-width: 1400px;
 }

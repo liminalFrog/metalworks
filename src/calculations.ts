@@ -500,6 +500,7 @@ export function generateMaterialTakeoff(data: BuildingData): string {
 
   return `
 Material Takeoff for Gabled Roof:
+// NOTES:
 // - Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span, creating a slope length of ${toFeetAndInches(slopeLengthPerSide)} per side.
 // - Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with ${overhangInches}" overhang added and ${peakGapInches}" gap at peak).
 // - Note: Roof purlins are spaced approximately 5' apart along the sloped roof surface, with ${purlinsPerSide} purlins per side, totaling ${totalPurlinLines} lines, split at each rafter.
@@ -511,22 +512,43 @@ Material Takeoff for Gabled Roof:
 // - Note: Man door header purlins span the full bay length; no purlins used as jambs for man doors.
 // - Note: Window framing purlins are for top and bottom, spanning the full bay length.
 // - Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
+
+// STRUCTURAL:
 - Columns (I-beams): ${totalColumnsWithCenters} @ ${toFeetAndInches(height)} each
 - Rafters (I-beams): ${totalRafters} @ ${toFeetAndInches(slopeLengthPerSide)} each
 - Roof Purlins: ${totalPurlinPieces} @ ${toFeetAndInches(purlinLength)} each (${purlinsPerSide} purlins per roof side, based on slope length of ${toFeetAndInches(slopeLengthPerSide)})
 - Wall Girts: ${totalGirtPieces} @ ${toFeetAndInches(girtLength)} each
 ${baseAnglePerimeterOutput}
 ${baseAngleGabledOutput}
+- Man Door Header Purlins: ${manDoorHeaderPurlins} @ ${toFeetAndInches(bayLength)} each
+- Window Framing Purlins: ${windowFramingPurlins} @ ${toFeetAndInches(bayLength)} each
+
+// PANELING:
 - Roof Panels (${panelType || 'R-Panel'}): ${roofPanels} @ ${toFeetAndInches(roofPanelLength)} each
-${ridgeRollOutput}${panelClosuresOutput}
+${sideWallPanelsOutput}${gabledEndPanelsOutput}
+${panelClosuresOutput}
+
+// TRIM:
+${ridgeRollOutput}
 ${peakBoxesOutput}
 ${rakeTrimOutput}
-${sideWallPanelsOutput}${gabledEndPanelsOutput}
 ${cornerTrimOutput}${dripFlashingOutput}${gutterOutput}
 ${headerTrimOutput}${doorJambsOutput}
+
+// DOORS AND WINDOWS:
+- Man Doors: ${manDoors.length}
+- Roll-Up Doors: ${rollUpDoors.length}
+- Windows: ${windows.length}
+- Awnings: ${awnings.length}
+- Awning Frames: ${awningFrames} @ varying lengths
+
+// ACCESSORIES:
 ${squareTubingOutput}
 ${weldedTabsOutput}
-${doorJambCasingOutput}${tekScrewsRoofOutput}
+${doorJambCasingOutput}
+
+// FASTENERS:
+${tekScrewsRoofOutput}
 ${tekScrewsWallOutput}
 ${tekScrewsTrimOutput}
 ${lapScrewsRoofOutput}
@@ -534,12 +556,5 @@ ${lapScrewsWallOutput}
 ${lapScrewsTrimOutput}
 ${windowScrewsOutput}
 ${concreteAnchorsOutput}
-- Man Door Header Purlins: ${manDoorHeaderPurlins} @ ${toFeetAndInches(bayLength)} each
-- Window Framing Purlins: ${windowFramingPurlins} @ ${toFeetAndInches(bayLength)} each
-- Awning Frames: ${awningFrames} @ varying lengths
-- Man Doors: ${manDoors.length}
-- Roll-Up Doors: ${rollUpDoors.length}
-- Windows: ${windows.length}
-- Awnings: ${awnings.length}
 `;
 }

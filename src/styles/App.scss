@@ -110,27 +110,27 @@ h4 {
   border-radius: 0.375rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
   
-  .card-header {
-    background: linear-gradient(to bottom, #0000001f 0%, #00000042 100%);
-    border-top: 1px solid #ffffff;
-    border-bottom: 1px solid #a0a3a7;
-    padding: 0.5rem 1rem;
-    
-    h4, h5 {
-      margin-bottom: 0;
-    }
-    
-    h5 {
-      font-size: 1rem;
-    }
-  }
-  
   .card-body {
     padding: 1rem;
     
     .table {
       margin-bottom: 0;
     }
+  }
+}
+
+.card-header, .accordian-button {
+  background: linear-gradient(to bottom, #0000001f 0%, #00000042 100%);
+  border-top: 1px solid #ffffff;
+  border-bottom: 1px solid #a0a3a7;
+  padding: 0.5rem 1rem;
+  
+  h4, h5 {
+    margin-bottom: 0;
+  }
+  
+  h5 {
+    font-size: 1rem;
   }
 }
 
@@ -229,7 +229,7 @@ h4 {
   border-color:rgb(130, 142, 155) !important;
 }
 
-.nav-tabs .nav-link.active, .accordion-button.collapsed {
+.nav-tabs .nav-link.active {
   border-bottom: none;
   background: linear-gradient(to top, #ffffff 0%, #97c8ff80 100%);
   text-shadow: #00000023 0px 1px 0px;

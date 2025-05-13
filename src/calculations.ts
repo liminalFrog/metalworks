@@ -13,6 +13,12 @@ export interface BuildingData {
   panelType?: string;
   roofOverhang?: number; // Amount to add to roof panel length (in inches)
   roofPeakGap?: number;  // Gap to leave at peak (in inches)
+  structuralFrames?: {
+    columnType: string;
+    columnSize: string;
+    beamType: string;
+    beamSize: string;
+  }[];
 }
 
 // Function to convert decimal feet to feet and inches
@@ -36,6 +42,49 @@ export function toFeetAndInches(decimalFeet: number): string {
 function calculateWallPanelArea(buildingData: BuildingData): number {
   // Example calculation, replace with actual logic
   return buildingData.length * buildingData.height * 2 + buildingData.width * buildingData.height * 2;
+}
+
+// Function to generate detailed structural element descriptions
+function generateStructuralDetails(
+  structuralFrames: { columnType: string; columnSize: string; beamType: string; beamSize: string }[],
+  totalColumnsWithCenters: number,
+  totalRafters: number,
+  height: number,
+  slopeLengthPerSide: number
+): string {
+  // Group columns by type and size
+  const columnGroups: { [key: string]: number } = {};
+  const beamGroups: { [key: string]: number } = {};
+  
+  structuralFrames.forEach(frame => {
+    // For columns - each frame has 2 columns
+    const columnKey = `${frame.columnType} ${frame.columnSize}`;
+    columnGroups[columnKey] = (columnGroups[columnKey] || 0) + 2;
+    
+    // For beams/rafters - each frame has 2 rafters
+    const beamKey = `${frame.beamType} ${frame.beamSize}`;
+    beamGroups[beamKey] = (beamGroups[beamKey] || 0) + 2;
+  });
+  
+  // Generate column output
+  let columnOutput = '';
+  Object.keys(columnGroups).forEach(columnType => {
+    columnOutput += `- ${columnType} Columns: ${columnGroups[columnType]} @ ${toFeetAndInches(height)} each\n`;
+  });
+  
+  // Add center columns if any (these will be generic I-beams)
+  const centerColumns = totalColumnsWithCenters - (structuralFrames.length * 2);
+  if (centerColumns > 0) {
+    columnOutput += `- Center Columns (I-beams): ${centerColumns} @ ${toFeetAndInches(height)} each\n`;
+  }
+  
+  // Generate rafter/beam output
+  let beamOutput = '';
+  Object.keys(beamGroups).forEach(beamType => {
+    beamOutput += `- ${beamType} Rafters: ${beamGroups[beamType]} @ ${toFeetAndInches(slopeLengthPerSide)} each\n`;
+  });
+  
+  return columnOutput + beamOutput;
 }
 
 export function generateMaterialTakeoff(data: BuildingData): string {
@@ -514,8 +563,8 @@ Material Takeoff for Gabled Roof:
 // - Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
 
 // STRUCTURAL:
-- Columns (I-beams): ${totalColumnsWithCenters} @ ${toFeetAndInches(height)} each
-- Rafters (I-beams): ${totalRafters} @ ${toFeetAndInches(slopeLengthPerSide)} each
+${data.structuralFrames ? generateStructuralDetails(data.structuralFrames, totalColumnsWithCenters, totalRafters, height, slopeLengthPerSide) : `- Columns (I-beams): ${totalColumnsWithCenters} @ ${toFeetAndInches(height)} each
+- Rafters (I-beams): ${totalRafters} @ ${toFeetAndInches(slopeLengthPerSide)} each`}
 - Roof Purlins: ${totalPurlinPieces} @ ${toFeetAndInches(purlinLength)} each (${purlinsPerSide} purlins per roof side, based on slope length of ${toFeetAndInches(slopeLengthPerSide)})
 - Wall Girts: ${totalGirtPieces} @ ${toFeetAndInches(girtLength)} each
 ${baseAnglePerimeterOutput}

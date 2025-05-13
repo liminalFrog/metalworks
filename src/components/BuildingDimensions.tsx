@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Form, Row, Col, Accordion, Button } from 'react-bootstrap';
+import ValidatedInput from './ValidatedInput';
 
 interface StructuralFrameConfig {
   columnType: string;
@@ -128,71 +129,70 @@ const BuildingDimensions: React.FC<BuildingDimensionsProps> = ({ data, updateFie
       <Card.Header>
         <h4>Building Dimensions</h4>
       </Card.Header>
-      <Card.Body>
-        <Row className="mb-3">
+      <Card.Body>        <Row className="mb-3">
           <Col md={6}>
-            <Form.Group controlId="width">
-              <Form.Label>Width (ft)</Form.Label>
-              <Form.Control 
-                type="number" 
-                min={10} 
-                max={100}
-                step={1}
-                value={data.width}
-                size="sm"
-                onChange={(e) => updateField('width', parseFloat(e.target.value))}
-                required
-              />
-            </Form.Group>
+            <ValidatedInput
+              type="number"
+              id="width"
+              label="Width (ft)"
+              min={10}
+              max={100}
+              step={1}
+              value={data.width}
+              size="sm"
+              onChange={(value) => updateField('width', value)}
+              required
+              defaultValue={40}
+            />
           </Col>
           <Col md={6}>
-            <Form.Group controlId="length">
-              <Form.Label>Length (ft)</Form.Label>
-              <Form.Control 
-                type="number" 
-                min={10} 
-                max={200} 
-                step={1}
-                value={data.length}
-                size="sm"
-                onChange={(e) => updateField('length', parseFloat(e.target.value))}
-                required
-              />
-            </Form.Group>
+            <ValidatedInput
+              type="number"
+              id="length"
+              label="Length (ft)"
+              min={10}
+              max={200}
+              step={1}
+              value={data.length}
+              size="sm"
+              onChange={(value) => updateField('length', value)}
+              required
+              defaultValue={40}
+            />
           </Col>
         </Row>
         <Row className="mb-3">
           <Col md={6}>
-            <Form.Group controlId="height">
-              <Form.Label>Eave Height (ft)</Form.Label>
-              <Form.Control
-                type="number"
-                min={8}
-                max={30}
-                step={0.5}
-                value={data.height}
-                size="sm"
-                onChange={(e) => updateField('height', parseFloat(e.target.value))}
-                required
-              />
-            </Form.Group>
+            <ValidatedInput
+              type="number"
+              id="height"
+              label="Eave Height (ft)"
+              min={8}
+              max={30}
+              step={0.5}
+              value={data.height}
+              size="sm"
+              onChange={(value) => updateField('height', value)}
+              required
+              defaultValue={12}
+            />
           </Col>
           <Col md={6}>
-            <Form.Group controlId="bays">
-              <Form.Label>Number of Bays</Form.Label>
-              <Form.Control 
-                type="number" 
-                min={1} 
-                max={10}
-                step={1}
-                value={data.bays}
-                size="sm"
-                onChange={(e) => updateField('bays', parseInt(e.target.value))}
-                required 
-              />
-            </Form.Group>
+            <ValidatedInput
+              type="number"
+              id="bays"
+              label="Number of Bays"
+              min={1}
+              max={10}
+              step={1}
+              value={data.bays}
+              size="sm"
+              onChange={(value) => updateField('bays', value)}
+              required
+              defaultValue={2}
+            />
           </Col>
-        </Row>        {/* Structural Section */}
+        </Row>{/* Structural Section */}
         <Accordion className="mb-3">
           <Accordion.Item eventKey="0">
             <Accordion.Header>Structural</Accordion.Header>

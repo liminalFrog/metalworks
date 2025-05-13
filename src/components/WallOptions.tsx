@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Form, Row, Col, Button, Nav, Tab, InputGroup } from 'react-bootstrap';
+import ValidatedInput from './ValidatedInput';
 
 // Update interfaces to include new positioning options and lock flags
 interface PositionConfig {
@@ -569,22 +570,19 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                     
                     {/* Girt Spacing with Apply to All and Lock */}
                     <Row className="mb-3 align-items-end">
-                      <Col md={4}>
-                        <Form.Group>
-                          <Form.Label>Spacing (ft)</Form.Label>
-                          <Form.Control
-                            type="number"
-                            min={1}
-                            max={10}
-                            step={0.5}
-                            value={wallData.girts.spacing}
-                            size="sm"
-                            onChange={(e) => updateWallField(wall, 'girts.spacing', parseFloat(e.target.value))}
-                          />
-                          <Form.Text className="text-muted">
-                            Distance between each girt
-                          </Form.Text>
-                        </Form.Group>
+                      <Col md={4}>                        <ValidatedInput
+                          type="number"
+                          id={`girt-spacing-${wall}`}
+                          label="Spacing (ft)"
+                          min={1}
+                          max={10}
+                          step={0.5}
+                          value={wallData.girts.spacing}
+                          size="sm"
+                          onChange={(value) => updateWallField(wall, 'girts.spacing', value)}
+                          helpText="Distance between each girt"
+                          defaultValue={5}
+                        />
                       </Col>
                       <Col md={3}>
                         <Button 
@@ -613,22 +611,19 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                     
                     {/* Max Gap with Apply to All and Lock */}
                     <Row className="mb-3 align-items-end">
-                      <Col md={4}>
-                        <Form.Group>
-                          <Form.Label>Max Gap (ft)</Form.Label>
-                          <Form.Control
-                            type="number"
-                            min={1}
-                            max={10}
-                            step={0.5}
-                            value={wallData.girts.maxGap}
-                            size="sm"
-                            onChange={(e) => updateWallField(wall, 'girts.maxGap', parseFloat(e.target.value))}
-                          />
-                          <Form.Text className="text-muted">
-                            Maximum acceptable gap between top girt and eave
-                          </Form.Text>
-                        </Form.Group>
+                      <Col md={4}>                        <ValidatedInput
+                          type="number"
+                          id={`girt-max-gap-${wall}`}
+                          label="Max Gap (ft)"
+                          min={1}
+                          max={10}
+                          step={0.5}
+                          value={wallData.girts.maxGap}
+                          size="sm"
+                          onChange={(value) => updateWallField(wall, 'girts.maxGap', value)}
+                          helpText="Maximum acceptable gap between top girt and eave"
+                          defaultValue={6}
+                        />
                       </Col>
                       <Col md={3}>
                         <Button 
@@ -831,33 +826,31 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                                 </Form.Select>
                               </Form.Group>
                             </Col>
-                            <Col md={4}>
-                              <Form.Group>
-                                <Form.Label>Width (ft)</Form.Label>
-                                <Form.Control
-                                  type="number"
-                                  min={6}
-                                  max={20}
-                                  step={1}
-                                  value={door.width}
-                                  size="sm"
-                                  onChange={(e) => updateBayDoor(wall, index, 'width', parseFloat(e.target.value))}
-                                />
-                              </Form.Group>
+                            <Col md={4}>                              <ValidatedInput
+                                type="number"
+                                id={`bay-door-width-${wall}-${index}`}
+                                label="Width (ft)"
+                                min={6}
+                                max={20}
+                                step={1}
+                                value={door.width}
+                                size="sm"
+                                onChange={(value) => updateBayDoor(wall, index, 'width', value)}
+                                defaultValue={10}
+                              />
                             </Col>
-                            <Col md={4}>
-                              <Form.Group>
-                                <Form.Label>Height (ft)</Form.Label>
-                                <Form.Control
-                                  type="number"
-                                  min={6}
-                                  max={14}
-                                  step={1}
-                                  value={door.height}
-                                  size="sm"
-                                  onChange={(e) => updateBayDoor(wall, index, 'height', parseFloat(e.target.value))}
-                                />
-                              </Form.Group>
+                            <Col md={4}>                              <ValidatedInput
+                                type="number"
+                                id={`bay-door-height-${wall}-${index}`}
+                                label="Height (ft)"
+                                min={6}
+                                max={14}
+                                step={1}
+                                value={door.height}
+                                size="sm"
+                                onChange={(value) => updateBayDoor(wall, index, 'height', value)}
+                                defaultValue={10}
+                              />
                             </Col>
                           </Row>
                           
@@ -898,33 +891,31 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                       <Card key={opening.id} className="mb-3 position-card">
                         <Card.Body>
                           <Row className="mb-3 align-items-end">
-                            <Col md={6}>
-                              <Form.Group>
-                                <Form.Label>Width (ft)</Form.Label>
-                                <Form.Control
-                                  type="number"
-                                  min={1}
-                                  max={20}
-                                  step={0.5}
-                                  value={opening.width}
-                                  size="sm"
-                                  onChange={(e) => updateOpening(wall, index, 'width', parseFloat(e.target.value))}
-                                />
-                              </Form.Group>
+                            <Col md={6}>                              <ValidatedInput
+                                type="number"
+                                id={`opening-width-${wall}-${index}`}
+                                label="Width (ft)"
+                                min={1}
+                                max={20}
+                                step={0.5}
+                                value={opening.width}
+                                size="sm"
+                                onChange={(value) => updateOpening(wall, index, 'width', value)}
+                                defaultValue={4}
+                              />
                             </Col>
-                            <Col md={6}>
-                              <Form.Group>
-                                <Form.Label>Height (ft)</Form.Label>
-                                <Form.Control
-                                  type="number"
-                                  min={1}
-                                  max={buildingHeight}
-                                  step={0.5}
-                                  value={opening.height}
-                                  size="sm"
-                                  onChange={(e) => updateOpening(wall, index, 'height', parseFloat(e.target.value))}
-                                />
-                              </Form.Group>
+                            <Col md={6}>                              <ValidatedInput
+                                type="number"
+                                id={`opening-height-${wall}-${index}`}
+                                label="Height (ft)"
+                                min={1}
+                                max={buildingHeight}
+                                step={0.5}
+                                value={opening.height}
+                                size="sm"
+                                onChange={(value) => updateOpening(wall, index, 'height', value)}
+                                defaultValue={4}
+                              />
                             </Col>
                           </Row>
                           
@@ -975,33 +966,31 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                   {wallData.awning.enabled && (
                     <Card.Body>
                       <Row className="mb-3">
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label>Height (ft)</Form.Label>
-                            <Form.Control
-                              type="number"
-                              min={0}
-                              max={buildingHeight}
-                              step={0.5}
-                              value={wallData.awning.height}
-                              size="sm"
-                              onChange={(e) => updateWallField(wall, 'awning.height', parseFloat(e.target.value))}
-                            />
-                          </Form.Group>
+                        <Col md={6}>                          <ValidatedInput
+                            type="number"
+                            id={`awning-height-${wall}`}
+                            label="Height (ft)"
+                            min={0}
+                            max={buildingHeight}
+                            step={0.5}
+                            value={wallData.awning.height}
+                            size="sm"
+                            onChange={(value) => updateWallField(wall, 'awning.height', value)}
+                            defaultValue={8}
+                          />
                         </Col>
-                        <Col md={6}>
-                          <Form.Group>
-                            <Form.Label>Width (ft)</Form.Label>
-                            <Form.Control
-                              type="number"
-                              min={1}
-                              max={getMaxDistance(wall)}
-                              step={0.5}
-                              value={wallData.awning.width}
-                              size="sm"
-                              onChange={(e) => updateWallField(wall, 'awning.width', parseFloat(e.target.value))}
-                            />
-                          </Form.Group>
+                        <Col md={6}>                          <ValidatedInput
+                            type="number"
+                            id={`awning-width-${wall}`}
+                            label="Width (ft)"
+                            min={1}
+                            max={getMaxDistance(wall)}
+                            step={0.5}
+                            value={wallData.awning.width}
+                            size="sm"
+                            onChange={(value) => updateWallField(wall, 'awning.width', value)}
+                            defaultValue={10}
+                          />
                         </Col>
                       </Row>
                       
@@ -1090,16 +1079,17 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                       <Card.Body>
                         <Row className="mb-3">
                           <Col md={6}>
-                            <Form.Group>
-                              <Form.Label>Width (ft)</Form.Label>
-                              <Form.Control
+                            <Form.Group>                              <ValidatedInput
                                 type="number"
+                                id={`roof-extension-width-${wall}`}
+                                label="Width (ft)"
                                 min={1}
                                 max={10}
                                 step={0.5}
                                 value={wallData.roofExtension.width}
                                 size="sm"
-                                onChange={(e) => updateWallField(wall, 'roofExtension.width', parseFloat(e.target.value))}
+                                onChange={(value) => updateWallField(wall, 'roofExtension.width', value)}
+                                defaultValue={4}
                               />
                             </Form.Group>
                           </Col>
@@ -1120,16 +1110,17 @@ const WallOptions: React.FC<WallOptionsProps> = ({
                         </Row>
                         
                         {wallData.roofExtension.dropWalls !== 'none' && (
-                          <Form.Group>
-                            <Form.Label>Wall Height (from eaves, ft)</Form.Label>
-                            <Form.Control
+                          <Form.Group>                            <ValidatedInput
                               type="number"
+                              id={`roof-extension-wall-height-${wall}`}
+                              label="Wall Height (from eaves, ft)"
                               min={1}
                               max={buildingHeight}
                               step={0.5}
                               value={wallData.roofExtension.wallHeight}
                               size="sm"
-                              onChange={(e) => updateWallField(wall, 'roofExtension.wallHeight', parseFloat(e.target.value))}
+                              onChange={(value) => updateWallField(wall, 'roofExtension.wallHeight', value)}
+                              defaultValue={4}
                             />
                           </Form.Group>
                         )}

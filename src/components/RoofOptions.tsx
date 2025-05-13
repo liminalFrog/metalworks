@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Form, Row, Col } from 'react-bootstrap';
+import ValidatedInput from './ValidatedInput';
 
 interface RoofOptionsProps {
   data: {
@@ -126,39 +127,33 @@ const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWi
               </Form.Select>
             </Form.Group>
           </Col>
-          <Col md={4}>
-            <Form.Group controlId="roofOverhang">
-              <Form.Label>Overhang (inches)</Form.Label>
-              <Form.Control
-                type="number"
-                min={0}
-                max={12}
-                step={0.5}
-                value={data.roofOverhang !== undefined ? data.roofOverhang : 2}
-                size="sm"
-                onChange={(e) => updateField('roofOverhang', parseFloat(e.target.value))}
-              />
-              <Form.Text className="text-muted">
-                Added to total panel length
-              </Form.Text>
-            </Form.Group>
+          <Col md={4}>            <ValidatedInput
+              type="number"
+              id="roofOverhang"
+              label="Overhang (inches)"
+              min={0}
+              max={12}
+              step={0.5}
+              value={data.roofOverhang !== undefined ? data.roofOverhang : 2}
+              size="sm"
+              onChange={(value) => updateField('roofOverhang', value)}
+              helpText="Added to total panel length"
+              defaultValue={2}
+            />
           </Col>
-          <Col md={4}>
-            <Form.Group controlId="roofPeakGap">
-              <Form.Label>Peak Gap (inches)</Form.Label>
-              <Form.Control
-                type="number"
-                min={0}
-                max={12}
-                step={0.5}
-                value={data.roofPeakGap !== undefined ? data.roofPeakGap : 1}
-                size="sm"
-                onChange={(e) => updateField('roofPeakGap', parseFloat(e.target.value))}
-              />
-              <Form.Text className="text-muted">
-                Gap to leave at ridge
-              </Form.Text>
-            </Form.Group>
+          <Col md={4}>            <ValidatedInput
+              type="number"
+              id="roofPeakGap"
+              label="Peak Gap (inches)"
+              min={0}
+              max={12}
+              step={0.5}
+              value={data.roofPeakGap !== undefined ? data.roofPeakGap : 1}
+              size="sm"
+              onChange={(value) => updateField('roofPeakGap', value)}
+              helpText="Gap to leave at ridge"
+              defaultValue={1}
+            />
           </Col>
         </Row>
         
@@ -182,37 +177,35 @@ const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWi
             </Form.Group>
           </Col>
           <Col md={4}>
-            <Form.Group>
-              <Form.Label>Spacing (ft)</Form.Label>
-              <Form.Control
+            <Form.Group>              <ValidatedInput
                 type="number"
+                id="purlinSpacing"
+                label="Spacing (ft)"
                 min={1}
                 max={10}
                 step={0.5}
                 value={data.purlins.spacing}
                 size="sm"
-                onChange={(e) => updatePurlinField('spacing', parseFloat(e.target.value))}
+                onChange={(value) => updatePurlinField('spacing', value)}
+                helpText="Distance between each purlin"
+                defaultValue={5}
               />
-              <Form.Text className="text-muted">
-                Distance between each purlin
-              </Form.Text>
             </Form.Group>
           </Col>
           <Col md={4}>
-            <Form.Group>
-              <Form.Label>Max Gap (ft)</Form.Label>
-              <Form.Control
+            <Form.Group>              <ValidatedInput
                 type="number"
+                id="purlinMaxGap"
+                label="Max Gap (ft)"
                 min={1}
                 max={10}
                 step={0.5}
                 value={data.purlins.maxGap}
                 size="sm"
-                onChange={(e) => updatePurlinField('maxGap', parseFloat(e.target.value))}
+                onChange={(value) => updatePurlinField('maxGap', value)}
+                helpText="Maximum acceptable gap between purlins"
+                defaultValue={6}
               />
-              <Form.Text className="text-muted">
-                Maximum acceptable gap between purlins
-              </Form.Text>
             </Form.Group>
           </Col>
         </Row>
@@ -260,37 +253,35 @@ const RoofOptions: React.FC<RoofOptionsProps> = ({ data, updateField, buildingWi
             </Form.Group>
           </Col>
           <Col md={4}>
-            <Form.Group>
-              <Form.Label>Overhang (inches)</Form.Label>
-              <Form.Control
+            <Form.Group>              <ValidatedInput
                 type="number"
+                id="roofOverhang2"
+                label="Overhang (inches)"
                 min={0}
                 max={24}
                 step={1}
                 value={data.roofOverhang || 0}
                 size="sm"
-                onChange={(e) => updateField('roofOverhang', parseInt(e.target.value, 10))}
+                onChange={(value) => updateField('roofOverhang', value)}
+                helpText="Additional length to add to roof panels"
+                defaultValue={2}
               />
-              <Form.Text className="text-muted">
-                Additional length to add to roof panels
-              </Form.Text>
             </Form.Group>
           </Col>
           <Col md={4}>
-            <Form.Group>
-              <Form.Label>Peak Gap (inches)</Form.Label>
-              <Form.Control
+            <Form.Group>              <ValidatedInput
                 type="number"
+                id="roofPeakGap2"
+                label="Peak Gap (inches)"
                 min={0}
                 max={12}
                 step={0.5}
                 value={data.roofPeakGap || 0}
                 size="sm"
-                onChange={(e) => updateField('roofPeakGap', parseFloat(e.target.value))}
+                onChange={(value) => updateField('roofPeakGap', value)}
+                helpText="Gap to leave at the roof peak"
+                defaultValue={1}
               />
-              <Form.Text className="text-muted">
-                Gap to leave at the roof peak
-              </Form.Text>
             </Form.Group>
           </Col>
         </Row>

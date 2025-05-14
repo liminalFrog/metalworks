@@ -13,6 +13,25 @@ export interface BuildingData {
   panelType?: string;
   roofOverhang?: number; // Amount to add to roof panel length (in inches)
   roofPeakGap?: number;  // Gap to leave at peak (in inches)
+  purlins?: {
+    size: string;
+    spacing: number;
+    maxGap: number;
+  };
+  walls?: {
+    [key: string]: {
+      girts: {
+        size: string;
+        spacing: number;
+        maxGap: number;
+        sizeLocked?: boolean;
+        spacingLocked?: boolean;
+        maxGapLocked?: boolean;
+      };
+      // Other wall properties not needed for this feature
+      [key: string]: any;
+    };
+  };
   structuralFrames?: {
     columnType: string;
     columnSize: string;
@@ -85,6 +104,36 @@ function generateStructuralDetails(
   });
   
   return columnOutput + beamOutput;
+}
+
+// Function to calculate girt clips needed
+function calculateGirtClips(
+  bays: number,
+  wallGirtsPerSideHeightSidewall: number,
+  wallGirtsPerSideHeightEndwall: number,
+  totalColumnsWithCenters: number,
+  centerColumnsFront: number,
+  centerColumnsBack: number
+): number {
+  // Calculate clips for sidewalls
+  // Each sidewall girt connects to a column at each end and at each intermediate column
+  // For each sidewall, there are (bays + 1) columns and wallGirtsPerSideHeightSidewall girts per wall
+  const sidewallClips = wallGirtsPerSideHeightSidewall * 2 * (bays + 1); // 2 sidewalls
+  
+  // Calculate clips for endwalls
+  // Each endwall has 2 corner columns plus potentially 1 center column
+  const frontEndwallColumns = 2 + centerColumnsFront; // 2 corner columns + center column (if present)
+  const backEndwallColumns = 2 + centerColumnsBack; // 2 corner columns + center column (if present)
+  
+  // Each endwall girt connects to each column on that wall
+  const frontEndwallClips = wallGirtsPerSideHeightEndwall * frontEndwallColumns;
+  const backEndwallClips = wallGirtsPerSideHeightEndwall * backEndwallColumns;
+  
+  // Total clips
+  const totalClips = sidewallClips + frontEndwallClips + backEndwallClips;
+  
+  // Round up to the nearest even number as requested
+  return Math.ceil(totalClips / 2) * 2;
 }
 
 export function generateMaterialTakeoff(data: BuildingData): string {
@@ -202,9 +251,7 @@ export function generateMaterialTakeoff(data: BuildingData): string {
         break;
       }
     }
-  }
-
-  // Add center columns to total column count
+  }  // Add center columns to total column count
   const totalColumnsWithCenters = totalColumns + centerColumnsFront + centerColumnsBack;
 
   // Calculate welded tabs needed for girt terminations at roll-up door jambs
@@ -237,11 +284,49 @@ export function generateMaterialTakeoff(data: BuildingData): string {
   const totalWallGirtsLinesSidewall = wallGirtsPerSideHeightSidewall * 2; // 2 girts * 2 sidewalls = 4 lines
   const totalWallGirtsLinesEndwall = wallGirtsPerSideHeightEndwall * 2; // 3 girts * 2 end walls = 6 lines
   const girtSegmentsPerLineSidewall = bays; // Sidewall girts split at columns (2 segments: 0'-20', 20'-40')
-
   const totalGirtPiecesSidewall = wallGirtsPerSideHeightSidewall * 2 * girtSegmentsPerLineSidewall; // 2 * 2 * 2 = 8 pieces
   const totalGirtPiecesEndwall = wallGirtsPerSideHeightEndwall * 2; // 3 girts * 2 end walls = 6 pieces
   const totalGirtPieces = totalGirtPiecesSidewall + totalGirtPiecesEndwall; // 8 + 6 = 14 pieces
   const girtLength = bayLength; // Each piece matches the bay length (20')
+  // Calculate girt clips needed for structural connections 
+  // Each girt requires a clip where it attaches to a column
+  // Group clips by girt size for each wall
+  
+  // Get the walls data, or use default values if not available
+  const walls = data.walls || {
+    north: { girts: { size: '2x6' } },
+    east: { girts: { size: '2x6' } },
+    south: { girts: { size: '2x6' } },
+    west: { girts: { size: '2x6' } }
+  };
+  
+  // Track girt clips per size
+  const girtClipsBySize: {[size: string]: number} = {};
+  
+  // North wall (endwall)
+  const northWallGirtSize = (walls.north && walls.north.girts && walls.north.girts.size) ? walls.north.girts.size : '2x6';
+  const northWallClips = wallGirtsPerSideHeightEndwall * (2 + centerColumnsFront);
+  girtClipsBySize[northWallGirtSize] = (girtClipsBySize[northWallGirtSize] || 0) + northWallClips;
+  
+  // South wall (endwall)
+  const southWallGirtSize = (walls.south && walls.south.girts && walls.south.girts.size) ? walls.south.girts.size : '2x6';
+  const southWallClips = wallGirtsPerSideHeightEndwall * (2 + centerColumnsBack);
+  girtClipsBySize[southWallGirtSize] = (girtClipsBySize[southWallGirtSize] || 0) + southWallClips;
+  
+  // East wall (sidewall)
+  const eastWallGirtSize = (walls.east && walls.east.girts && walls.east.girts.size) ? walls.east.girts.size : '2x6';
+  const eastWallClips = wallGirtsPerSideHeightSidewall * (bays + 1);
+  girtClipsBySize[eastWallGirtSize] = (girtClipsBySize[eastWallGirtSize] || 0) + eastWallClips;
+  
+  // West wall (sidewall)
+  const westWallGirtSize = (walls.west && walls.west.girts && walls.west.girts.size) ? walls.west.girts.size : '2x6';
+  const westWallClips = wallGirtsPerSideHeightSidewall * (bays + 1);
+  girtClipsBySize[westWallGirtSize] = (girtClipsBySize[westWallGirtSize] || 0) + westWallClips;
+  
+  // Round each size's clip count to the nearest even number
+  Object.keys(girtClipsBySize).forEach(size => {
+    girtClipsBySize[size] = Math.ceil(girtClipsBySize[size] / 2) * 2;
+  });
 
   // Base Angle (along the perimeter at foundation and along gabled end wall roof lines, as a structural component)
   const baseAnglePerimeterLengthOriginal = (length * 2) + (width * 2); // Perimeter at foundation (160')
@@ -548,19 +633,7 @@ export function generateMaterialTakeoff(data: BuildingData): string {
     `- Welded Tabs for Girt Terminations: ${weldedTabsNeeded} (for securing girts to roll-up door jambs)` : '';
 
   return `
-Material Takeoff for Gabled Roof:
-// NOTES:
-// - Note: Ridge centered, each side slopes at ${pitch}:12 pitch over ${runPerSide} ft horizontal span, creating a slope length of ${toFeetAndInches(slopeLengthPerSide)} per side.
-// - Note: Roof panels run perpendicular to eaves (spanning eave to ridge, with ${overhangInches}" overhang added and ${peakGapInches}" gap at peak).
-// - Note: Roof purlins are spaced approximately 5' apart along the sloped roof surface, with ${purlinsPerSide} purlins per side, totaling ${totalPurlinLines} lines, split at each rafter.
-// - Note: Wall girts are split at column positions.
-// - Note: Sidewall girts are positioned at 5' and 10'; sidewall panels are fastened to base angle, 5' girt, 10' girt, and eave strut.
-// - Note: Gabled end wall girts are positioned at 5' spacing from the base, with the final girt at eave height (${height}'); additional girt added if peak distance exceeds 7'; girts do not span between roll-up door jambs unless above the header (10').
-// - Note: Each gabled endwall has a center column unless there is a roll-up door interfering with the center position. Wall girts terminate at door jambs and are secured with welded tabs.
-// - Note: Roll-up doors on gabled end walls: single door is centered; two or more doors are spaced equally between sidewalls and each other for uniform visible panel spacing (rounded to nearest inch).
-// - Note: Man door header purlins span the full bay length; no purlins used as jambs for man doors.
-// - Note: Window framing purlins are for top and bottom, spanning the full bay length.
-// - Note: Sidewall panel heights are set to eave height; gabled end wall panels extend from base to gable roofline, using the edge furthest from the eave left of the peak and closest to the eave right of the peak; peak panels match the vertical height to the peak.
+MATERIAL TAKEOFF
 
 // STRUCTURAL:
 ${data.structuralFrames ? generateStructuralDetails(data.structuralFrames, totalColumnsWithCenters, totalRafters, height, slopeLengthPerSide) : `- Columns (I-beams): ${totalColumnsWithCenters} @ ${toFeetAndInches(height)} each
@@ -595,6 +668,7 @@ ${headerTrimOutput}${doorJambsOutput}
 ${squareTubingOutput}
 ${weldedTabsOutput}
 ${doorJambCasingOutput}
+${Object.keys(girtClipsBySize).sort().map(size => `- Girt Clips (${size}): ${girtClipsBySize[size]} (clips used to attach ${size} girts to columns; count rounded to nearest even number)`).join('\n')}
 
 // FASTENERS:
 ${tekScrewsRoofOutput}

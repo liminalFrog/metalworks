@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Form, Button, Spinner, ButtonGroup } from 'react-bootstrap';
 import { ipcRenderer } from 'electron';
+import { FaArrowAltCircleRight, FaPrint, FaCopy, FaSync } from 'react-icons/fa';
 import BuildingDimensions from './components/BuildingDimensions';
 import RoofOptions from './components/RoofOptions';
 import InsulationOptions from './components/InsulationOptions';
@@ -164,7 +165,6 @@ function App() {
         });
     }
   };
-
   const handleExport = () => {
     if (materialTakeoff) {
       const blob = new Blob([materialTakeoff], { type: 'text/plain' });
@@ -174,6 +174,319 @@ function App() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+    const handlePrint = () => {
+    if (materialTakeoff) {
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Please allow popups for this website');
+        return;
+      }
+      
+      // Parse the material takeoff data to create a table structure
+      const parseToTableData = (text: string) => {
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        const items = [];
+        
+        let currentCategory = 'General';
+        
+        for (const line of lines) {
+          // Skip the material takeoff header
+          if (line.startsWith('Material Takeoff for') || line.startsWith('MATERIAL TAKEOFF')) {
+            continue;
+          }
+          
+          // Handle category headers (lines starting with // followed by category name:)
+          if (line.startsWith('// ')) {
+            const categoryMatch = line.match(/\/\/\s+([A-Z\s]+):/);
+            if (categoryMatch) {
+              currentCategory = categoryMatch[1];
+            }
+            continue;
+          }
+          
+          // Handle notes
+          if (line.startsWith('// - Note:')) {
+            const noteContent = line.substring('// - Note:'.length).trim();
+            items.push({
+              category: 'Notes',
+              description: 'Note',
+              quantity: '',
+              size: '',
+              notes: noteContent
+            });
+            continue;
+          }
+          
+          // Handle regular items (starting with a dash)
+          if (line.startsWith('-')) {
+            let itemText = line.substring(1).trim();
+            
+            // Handle case with direct quantity/size information (like '- Man Door Header Purlins: 1 @ 20' each')
+            const qtyMatch = itemText.match(/^(.*?):\s+(\d+)\s+@\s+([\d']+"?)(?:\s+each)?(?:\s+\((.*)\))?$/);
+            if (qtyMatch) {
+              items.push({
+                category: currentCategory,
+                description: qtyMatch[1].trim(),
+                quantity: qtyMatch[2].trim(),
+                size: qtyMatch[3].trim(),
+                notes: qtyMatch[4] ? qtyMatch[4].trim() : ''
+              });
+              continue;
+            }
+            
+            // Handle items with quantity but no size (like '- Peak Boxes: 2')
+            const simpleQtyMatch = itemText.match(/^(.*?):\s+(\d+)(?:\s+\((.*)\))?$/);
+            if (simpleQtyMatch) {
+              items.push({
+                category: currentCategory,
+                description: simpleQtyMatch[1].trim(),
+                quantity: simpleQtyMatch[2].trim(),
+                size: '',
+                notes: simpleQtyMatch[3] ? simpleQtyMatch[3].trim() : ''
+              });
+              continue;
+            }
+            
+            // Handle square tubing format ('- 4"x4"x14 Gauge Square Tubing: 2 @ 12' each (for roll-up door jambs)')
+            const tubingMatches = itemText.match(/^(.*?):\s+(\d+)\s+@\s+([\d']+"?)(?:\s+each)?(?:\s+\((.*)\))?$/);
+            if (tubingMatches) {
+              items.push({
+                category: currentCategory,
+                description: tubingMatches[1].trim(),
+                quantity: tubingMatches[2].trim(),
+                size: tubingMatches[3].trim(),
+                notes: tubingMatches[4] ? tubingMatches[4].trim() : ''
+              });
+              continue;
+            }
+            
+            // Handle complex formats like the wall panels with height arrays
+            const complexMatches = itemText.match(/^(.*?):\s+(.*?)$/);
+            
+            if (complexMatches) {
+              items.push({
+                category: currentCategory,
+                description: complexMatches[1].trim(),
+                quantity: '',
+                size: '',
+                notes: complexMatches[2].trim()
+              });
+            } else {
+              // Fallback for lines that don't match expected patterns
+              items.push({
+                category: currentCategory,
+                description: itemText,
+                quantity: '',
+                size: '',
+                notes: ''
+              });
+            }
+          }
+        }
+        
+        return items;
+      };
+      
+      // Parse the material takeoff data
+      const tableData = parseToTableData(materialTakeoff);
+      
+      // Get unique categories
+      const allCategories = [...new Set(tableData.map(item => item.category))];
+      
+      // Sort categories
+      const sortedCategories = ['Notes', ...allCategories.filter(cat => cat !== 'Notes').sort()];
+      
+      // Function to get category badge color
+      const getCategoryBadgeColor = (category) => {
+        const catLower = category.toLowerCase();
+        if (catLower === 'structural') return 'primary';
+        if (catLower === 'paneling') return 'success';
+        if (catLower === 'trim') return 'info';
+        if (catLower === 'fasteners') return 'dark';
+        if (catLower === 'doors and windows') return 'warning';
+        if (catLower === 'accessories') return 'danger';
+        if (catLower === 'notes') return 'light';
+        return 'secondary';
+      };
+      
+      // Generate table rows for each category
+      let tableContent = '';
+      
+      sortedCategories.forEach(category => {
+        const categoryItems = tableData.filter(item => item.category === category);
+        if (categoryItems.length > 0) {
+          // Add category header
+          const badgeColor = getCategoryBadgeColor(category);
+          tableContent += `
+            <tr>
+              <td colspan="4" class="category-header bg-light">
+                <span class="badge bg-${badgeColor} rounded-pill">${category} (${categoryItems.length})</span>
+              </td>
+            </tr>
+          `;
+          
+          // Add items for this category
+          categoryItems.forEach(item => {
+            if (item.description === 'Note') {
+              tableContent += `
+                <tr class="table-secondary">
+                  <td colspan="4" class="fst-italic text-muted">
+                    <small>${item.notes}</small>
+                  </td>
+                </tr>
+              `;
+            } else {
+              tableContent += `                <tr>
+                  <td>
+                    ${item.description}
+                    <span class="badge bg-${getCategoryBadgeColor(category)} ms-2 takeoff-category-inline">
+                      ${item.category}
+                    </span>
+                  </td>
+                  <td class="text-center">${item.quantity}</td>
+                  <td>${item.size}</td>
+                  <td>${item.notes}</td>
+                </tr>
+              `;
+            }
+          });
+        }
+      });
+        // Include both the Bootstrap styles and the app's styles
+      
+      // Get the app's styles from the current document
+      const appStyles = Array.from(document.styleSheets)
+        .filter(sheet => {
+          try {
+            // Filter out external stylesheets we can't access due to CORS
+            return sheet.cssRules && sheet.cssRules.length > 0;
+          } catch (e) {
+            return false;
+          }
+        })
+        .map(sheet => {
+          // Extract CSS rules from each stylesheet
+          try {
+            return Array.from(sheet.cssRules)
+              .map(rule => rule.cssText)
+              .join('\n');
+          } catch (e) {
+            return '';
+          }
+        })
+        .join('\n');
+      
+      // Add Bootstrap styles and create the print window HTML
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Material Takeoff</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+              ${appStyles}
+              
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+                padding: 20px;
+              }
+              .table {
+                width: 100%;
+                margin-bottom: 1rem;
+                color: #212529;
+                border-collapse: collapse;
+              }
+              .table th, .table td {
+                padding: 0.75rem;
+                border: 1px solid #dee2e6;
+              }              .table-striped tbody tr:nth-of-type(odd) {
+                background-color: rgba(0, 0, 0, 0.05);
+              }
+              .category-header {
+                font-weight: bold;
+                padding: 10px 15px !important;
+              }
+              .badge {
+                display: inline-block;
+                padding: 0.35em 0.65em;
+                font-size: 0.75em;
+                font-weight: 700;
+                line-height: 1;
+                color: #fff;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: baseline;
+                border-radius: 0.25rem;
+              }
+              /* Match the MaterialTakeoff component styling */
+              .takeoff-category-inline {
+                font-size: 0.7em;
+                vertical-align: middle;
+              }
+              .material-table th {
+                background-color: #f8f9fa;
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                font-weight: 600;
+              }
+              @media print {
+                .no-print {
+                  display: none;
+                }
+                .table th, .table td {
+                  background-color: white !important;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+                .table-striped tbody tr:nth-of-type(odd) td {
+                  background-color: #f2f2f2 !important;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container-fluid">
+              <div class="row mb-3">
+                <div class="col">
+                  <h2>Material Takeoff</h2>
+                </div>
+                <div class="col-auto">
+                  <button class="btn btn-primary no-print" onclick="window.print()">Print</button>
+                </div>
+              </div>
+                <div class="table-responsive">
+                <table class="table table-striped table-bordered material-table">
+                  <thead>
+                    <tr>
+                      <th>Material</th>
+                      <th>Quantity</th>
+                      <th>Size</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableContent}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+      
+      // Wait for styles to load before printing
+      setTimeout(() => {
+        // Let the user control the printing from the new window
+        // The window has a print button they can use when ready
+      }, 250);
     }
   };
 
@@ -506,21 +819,27 @@ function App() {
           <Col md={6} className="vh-100 overflow-y-scroll">
             <div className="d-flex justify-content-between align-items-center sticky-top bg-white pt-3 pb-2 mb-3 border-bottom">
               <h4 className="m-0">Material Takeoff</h4>
-              <ButtonGroup>
-                <Button
-                  variant="success"
+              <ButtonGroup>                <Button
+                  variant="primary"
                   onClick={handleSubmit}
                   className="px-3"
                 >
-                  Generate
+                  <FaSync className="me-1" /> Generate
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="primary"
+                  onClick={handlePrint}
+                  className="px-3"
+                  disabled={!materialTakeoff}
+                >
+                  <FaPrint className="me-1" /> Print
+                </Button>                <Button
+                  variant="primary"
                   onClick={handleCopyList}
                   className="px-3"
                   disabled={!materialTakeoff}
                 >
-                  Copy List
+                  <FaCopy className='me-1' /> Copy
                 </Button>
                 <Button
                   variant="primary"
@@ -528,7 +847,7 @@ function App() {
                   className="px-3"
                   disabled={!materialTakeoff}
                 >
-                  Export
+                  <FaArrowAltCircleRight className="me-1" /> Export
                 </Button>
               </ButtonGroup>
             </div>

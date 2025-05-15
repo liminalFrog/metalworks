@@ -1153,6 +1153,8 @@ const WallOptions: React.FC<WallOptionsProps> = ({
       bays={bays}
       selectedBay={currentPositionField?.currentBay || 'A'}
       onBaySelected={handleBaySelected}
+      buildingWidth={buildingWidth}
+      buildingLength={buildingLength}
     />
     </>
   );

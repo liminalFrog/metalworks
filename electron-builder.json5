@@ -1,23 +1,23 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.metalworks.app",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "Metal Works",
   "directories": {
-    "output": "release/${version}"
+    "output": "release/${version}",
+    "buildResources": "build"
   },
   "files": [
     "dist",
     "dist-electron"
-  ],
-  "mac": {
+  ],  "mac": {
     "target": [
       "dmg"
     ],
+    "icon": "build/icons/mac/icon.icns",
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
-  },
-  "win": {
+  },  "win": {
     "target": [
       {
         "target": "nsis",
@@ -26,6 +26,7 @@
         ]
       }
     ],
+    "icon": "build/icons/win/icon.ico",
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
   },
   "nsis": {
@@ -33,11 +34,11 @@
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
-  },
-  "linux": {
+  },  "linux": {
     "target": [
       "AppImage"
     ],
+    "icon": "build/icons/png",
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
 }

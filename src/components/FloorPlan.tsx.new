@@ -1,0 +1,297 @@
+import React, { useEffect, useRef } from 'react';
+
+interface StructuralFrameConfig {
+  columnType: string;
+  columnSize: string;
+  beamType: string;
+  beamSize: string;
+}
+
+interface FloorPlanProps {
+  buildingWidth: number;
+  buildingLength: number;
+  bays: number;
+  structuralFrames?: StructuralFrameConfig[];
+}
+
+// Function to map structural column types to visual types
+const mapColumnTypeToVisual = (columnType: string): 'I-beam' | 'square' | 'round' => {
+  // W and S types are I-beams
+  if (columnType === 'W' || columnType === 'S') {
+    return 'I-beam';
+  }
+  // HSS Rect., C, T, HSS, and TS types are square
+  else if (columnType === 'HSS Rect.' || columnType === 'C' || columnType === 'T' || 
+           columnType === 'HSS' || columnType === 'TS') {
+    return 'square';
+  }
+  // HSS Round and Pipe types are round
+  else if (columnType === 'HSS Round' || columnType === 'Pipe') {
+    return 'round';
+  }
+  // Default to I-beam for any unrecognized type
+  return 'I-beam';
+};
+
+const FloorPlan: React.FC<FloorPlanProps> = ({ 
+  buildingWidth, 
+  buildingLength, 
+  bays,
+  structuralFrames = []
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Draw an individual column
+  const drawColumn = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    type: 'I-beam' | 'square' | 'round'
+  ) => {
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000';
+    ctx.fillStyle = '#888';
+    
+    // Draw column based on type
+    switch(type) {
+      case 'I-beam': {
+        // Draw I-beam with better appearance
+        
+        // Top flange
+        ctx.beginPath();
+        ctx.rect(x - size / 2, y - size / 2, size, size / 3);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Web
+        ctx.beginPath();
+        ctx.rect(x - size / 6, y - size / 2 + size / 3, size / 3, size - 2 * (size / 3));
+        ctx.fill();
+        ctx.stroke();
+        
+        // Bottom flange
+        ctx.beginPath();
+        ctx.rect(x - size / 2, y + size / 2 - size / 3, size, size / 3);
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+      case 'square': {
+        // Draw square column (HSS/Tube steel)
+        ctx.beginPath();
+        ctx.rect(x - size / 2, y - size / 2, size, size);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Draw inner rectangle to show it's hollow
+        ctx.fillStyle = '#fff';
+        const innerSize = size * 0.6;
+        ctx.beginPath();
+        ctx.rect(x - innerSize / 2, y - innerSize / 2, innerSize, innerSize);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Reset fill color
+        ctx.fillStyle = '#888';
+        break;
+      }
+      case 'round': {
+        // Draw round column
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Make it look like a pipe with a small inner circle
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(x, y, size / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Reset fill color
+        ctx.fillStyle = '#888';
+        break;
+      }
+    }
+  };
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Get actual canvas dimensions from CSS size
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
+    // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Set up drawing constants
+    const padding = 40; // Padding around the building for dimensions
+    const buildingRatio = buildingWidth / buildingLength;
+    
+    // Calculate drawing dimensions to fit in canvas while preserving aspect ratio
+    const availableWidth = canvas.width - (padding * 2);
+    const availableHeight = canvas.height - (padding * 2);
+    
+    let drawingWidth, drawingHeight;
+    
+    if (buildingLength > buildingWidth) {
+      // Building is longer than wide (typical)
+      drawingHeight = availableHeight;
+      drawingWidth = drawingHeight * buildingRatio;
+      
+      // If drawing is too wide, constrain by width
+      if (drawingWidth > availableWidth) {
+        drawingWidth = availableWidth;
+        drawingHeight = drawingWidth / buildingRatio;
+      }
+    } else {
+      // Building is wider than long (unusual)
+      drawingWidth = availableWidth;
+      drawingHeight = drawingWidth / buildingRatio;
+      
+      // If drawing is too tall, constrain by height
+      if (drawingHeight > availableHeight) {
+        drawingHeight = availableHeight;
+        drawingWidth = drawingHeight * buildingRatio;
+      }
+    }
+    
+    // Calculate building position
+    const buildingX = (canvas.width - drawingWidth) / 2;
+    const buildingY = (canvas.height - drawingHeight) / 2;
+    
+    // Draw building outline
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(buildingX, buildingY, drawingWidth, drawingHeight);
+    
+    // Draw width dimension line
+    const dimensionLineOffset = 20;
+    
+    // Top dimension line (width)
+    ctx.beginPath();
+    ctx.moveTo(buildingX, buildingY - dimensionLineOffset);
+    ctx.lineTo(buildingX + drawingWidth, buildingY - dimensionLineOffset);
+    ctx.stroke();
+    
+    // Dimension arrows (width)
+    const arrowSize = 6;
+    
+    // Left arrow
+    ctx.beginPath();
+    ctx.moveTo(buildingX, buildingY - dimensionLineOffset);
+    ctx.lineTo(buildingX + arrowSize, buildingY - dimensionLineOffset - arrowSize / 2);
+    ctx.lineTo(buildingX + arrowSize, buildingY - dimensionLineOffset + arrowSize / 2);
+    ctx.closePath();
+    ctx.fillStyle = '#000';
+    ctx.fill();
+    
+    // Right arrow
+    ctx.beginPath();
+    ctx.moveTo(buildingX + drawingWidth, buildingY - dimensionLineOffset);
+    ctx.lineTo(buildingX + drawingWidth - arrowSize, buildingY - dimensionLineOffset - arrowSize / 2);
+    ctx.lineTo(buildingX + drawingWidth - arrowSize, buildingY - dimensionLineOffset + arrowSize / 2);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Width dimension text
+    ctx.fillStyle = '#000';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${buildingWidth}'`, buildingX + drawingWidth / 2, buildingY - dimensionLineOffset - 10);
+    
+    // Left dimension line (length)
+    ctx.beginPath();
+    ctx.moveTo(buildingX - dimensionLineOffset, buildingY);
+    ctx.lineTo(buildingX - dimensionLineOffset, buildingY + drawingHeight);
+    ctx.stroke();
+    
+    // Dimension arrows (length)
+    // Top arrow
+    ctx.beginPath();
+    ctx.moveTo(buildingX - dimensionLineOffset, buildingY);
+    ctx.lineTo(buildingX - dimensionLineOffset - arrowSize / 2, buildingY + arrowSize);
+    ctx.lineTo(buildingX - dimensionLineOffset + arrowSize / 2, buildingY + arrowSize);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Bottom arrow
+    ctx.beginPath();
+    ctx.moveTo(buildingX - dimensionLineOffset, buildingY + drawingHeight);
+    ctx.lineTo(buildingX - dimensionLineOffset - arrowSize / 2, buildingY + drawingHeight - arrowSize);
+    ctx.lineTo(buildingX - dimensionLineOffset + arrowSize / 2, buildingY + drawingHeight - arrowSize);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Length dimension text
+    ctx.save();
+    ctx.translate(buildingX - dimensionLineOffset - 10, buildingY + drawingHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(`${buildingLength}'`, 0, 0);
+    ctx.restore();
+
+    // Function to get column type based on frame index
+    const getColumnType = (frameIndex: number): 'I-beam' | 'square' | 'round' => {
+      // Use structural frames data if available for this index
+      if (structuralFrames && structuralFrames[frameIndex]) {
+        return mapColumnTypeToVisual(structuralFrames[frameIndex].columnType);
+      }
+      
+      // Default to I-beam if no frame data available
+      return 'I-beam';
+    };
+    
+    // Draw corner columns (North Wall - first frame)
+    const northWallColumnType = getColumnType(0);
+    drawColumn(ctx, buildingX, buildingY, 8, northWallColumnType);
+    drawColumn(ctx, buildingX + drawingWidth, buildingY, 8, northWallColumnType);
+    
+    // Draw corner columns (South Wall - last frame)
+    const southWallColumnType = getColumnType(bays);
+    drawColumn(ctx, buildingX, buildingY + drawingHeight, 8, southWallColumnType);
+    drawColumn(ctx, buildingX + drawingWidth, buildingY + drawingHeight, 8, southWallColumnType);
+    
+    // Draw bay dividers
+    if (bays > 1) {
+      const bayHeight = drawingHeight / bays;
+      
+      for (let i = 1; i < bays; i++) {
+        const bayY = buildingY + (i * bayHeight);
+        
+        // Dashed lines for bay dividers
+        ctx.beginPath();
+        ctx.setLineDash([5, 3]);
+        ctx.moveTo(buildingX, bayY);
+        ctx.lineTo(buildingX + drawingWidth, bayY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Draw columns at each bay divider with the specific frame index
+        // Use the correct frame index based on bay divisions
+        const frameColumnType = getColumnType(i);
+        drawColumn(ctx, buildingX, bayY, 8, frameColumnType);
+        drawColumn(ctx, buildingX + drawingWidth, bayY, 8, frameColumnType);
+      }
+    }
+  }, [buildingWidth, buildingLength, bays, structuralFrames]);
+  
+  return (
+    <div className="floor-plan-container">
+      <canvas
+        ref={canvasRef}
+        className="floor-plan-canvas"
+      />
+    </div>
+  );
+};
+
+export default FloorPlan;

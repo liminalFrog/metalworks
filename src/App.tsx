@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Form, Button, Spinner, ButtonGroup } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Spinner, ButtonGroup, Card } from 'react-bootstrap';
 import { ipcRenderer } from 'electron';
 import { FaArrowAltCircleRight, FaPrint, FaCopy, FaSync } from 'react-icons/fa';
 import BuildingDimensions from './components/BuildingDimensions';
@@ -8,6 +8,7 @@ import InsulationOptions from './components/InsulationOptions';
 import PanelingOptions from './components/PanelingOptions';
 import WallOptions from './components/WallOptions';
 import MaterialTakeoff from './components/MaterialTakeoff';
+import FloorPlan from './components/FloorPlan';
 import MenuBar from './components/MenuBar';
 import { generateMaterialTakeoff } from './calculations';
 import './styles/App.scss';
@@ -119,7 +120,6 @@ function App() {
   const [buildingData, setBuildingData] = useState(defaultBuildingData);
   const [materialTakeoff, setMaterialTakeoff] = useState('');
   const [appLoading, setAppLoading] = useState(true);
-
   // File management state
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [isDocumentModified, setIsDocumentModified] = useState(false);
@@ -814,9 +814,21 @@ function App() {
                 insulation={buildingData.insulation}
               />
             </Form>
-          </Col>
-
-          <Col md={6} className="vh-100 overflow-y-scroll">
+          </Col>          <Col md={6} className="vh-100 overflow-y-scroll">
+            <h4 className="mt-3 mb-4">Building Visualization</h4>
+              <Card className="mb-4">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <h5>Floor Plan</h5>
+              </Card.Header>
+              <Card.Body className="p-0">                <FloorPlan 
+                  buildingWidth={buildingData.width} 
+                  buildingLength={buildingData.length} 
+                  bays={buildingData.bays}
+                  structuralFrames={buildingData.structuralFrames}
+                />
+              </Card.Body>
+            </Card>
+            
             <div className="d-flex justify-content-between align-items-center sticky-top bg-white pt-3 pb-2 mb-3 border-bottom">
               <h4 className="m-0">Material Takeoff</h4>
               <ButtonGroup>                <Button

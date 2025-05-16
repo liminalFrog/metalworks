@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 interface StructuralFrameConfig {
   columnType: string;
@@ -42,6 +42,38 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  
+  // Function to redraw the canvas when dimensions change
+  const redrawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const container = containerRef.current;
+    if (!container) return;
+    
+    // Set canvas dimensions to match container
+    const containerRect = container.getBoundingClientRect();
+    canvas.width = containerRect.width;
+    canvas.height = containerRect.height;
+    
+    // Now trigger a redraw with the new dimensions
+    drawFloorPlan();
+  }, [buildingWidth, buildingLength, bays, structuralFrames]);
+  
+  // Main function to draw the floor plan
+  const drawFloorPlan = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Calculate drawing dimensions
+    renderFloorPlan(ctx, canvas.width, canvas.height);
+  }, [buildingWidth, buildingLength, bays, structuralFrames]);
   
   // Draw an individual column
   const drawColumn = (
@@ -118,29 +150,22 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
       }
     }
   };
-
-  // Function to get column type based on frame index
-  const getColumnType = (frameIndex: number): 'I-beam' | 'square' | 'round' => {
-    // Use structural frames data if available for this index
-    if (structuralFrames && structuralFrames[frameIndex]) {
-      return mapColumnTypeToVisual(structuralFrames[frameIndex].columnType);
-    }
-    
-    // Default to I-beam if no frame data available
-    return 'I-beam';
-  };
-
-  // Main function to draw the floor plan
-  const drawFloorPlan = useCallback(() => {
+  
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
+    // Get actual canvas dimensions from CSS size
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     // Set up drawing constants
     const padding = 40; // Padding around the building for dimensions
     const buildingRatio = buildingWidth / buildingLength;
@@ -248,6 +273,17 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     ctx.fillText(`${buildingLength}'`, 0, 0);
     ctx.restore();
 
+    // Function to get column type based on frame index
+    const getColumnType = (frameIndex: number): 'I-beam' | 'square' | 'round' => {
+      // Use structural frames data if available for this index
+      if (structuralFrames && structuralFrames[frameIndex]) {
+        return mapColumnTypeToVisual(structuralFrames[frameIndex].columnType);
+      }
+      
+      // Default to I-beam if no frame data available
+      return 'I-beam';
+    };
+    
     // Draw corner columns (North Wall - first frame)
     const northWallColumnType = getColumnType(0);
     drawColumn(ctx, buildingX, buildingY, 8, northWallColumnType);
@@ -281,47 +317,9 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
       }
     }
   }, [buildingWidth, buildingLength, bays, structuralFrames]);
-
-  // Setup the resize observer and initial drawing
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    
-    if (!canvas || !container) return;
-    
-    // Function to handle resize
-    const handleResize = () => {
-      const rect = container.getBoundingClientRect();
-      
-      // Set canvas dimensions to match container size
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      
-      // Redraw the floor plan with the new dimensions
-      drawFloorPlan();
-    };
-    
-    // Initial setup
-    handleResize();
-    
-    // Setup resize observer to handle window/container size changes
-    if (resizeObserverRef.current) {
-      resizeObserverRef.current.disconnect();
-    }
-    
-    resizeObserverRef.current = new ResizeObserver(handleResize);
-    resizeObserverRef.current.observe(container);
-    
-    // Cleanup
-    return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
-    };
-  }, [drawFloorPlan]);
   
   return (
-    <div className="floor-plan-container" ref={containerRef}>
+    <div className="floor-plan-container">
       <canvas
         ref={canvasRef}
         className="floor-plan-canvas"

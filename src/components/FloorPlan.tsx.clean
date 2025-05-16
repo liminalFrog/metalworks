@@ -181,8 +181,9 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
       }
     }
   };
-    // Function to get column type based on frame index - wrapped in useCallback to avoid dependency cycle
-  const getColumnType = useCallback((frameIndex: number): 'I-beam' | 'square' | 'round' => {
+  
+  // Function to get column type based on frame index
+  const getColumnType = (frameIndex: number): 'I-beam' | 'square' | 'round' => {
     // Use structural frames data if available for this index
     if (structuralFrames && structuralFrames[frameIndex]) {
       return mapColumnTypeToVisual(structuralFrames[frameIndex].columnType);
@@ -190,7 +191,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     
     // Default to I-beam if no frame data available
     return 'I-beam';
-  }, [structuralFrames]);
+  };
   
   // Main function to draw the floor plan
   const drawFloorPlan = useCallback(() => {
@@ -821,7 +822,7 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
         drawOpening(buildingX, openingY, opening.width, openingHeight, 'vertical');
       });
     }
-  }, [buildingWidth, buildingLength, bays, walls, getColumnType]);
+  }, [buildingWidth, buildingLength, bays, structuralFrames, walls]);
 
   // Setup the resize observer and initial drawing
   useEffect(() => {

@@ -825,6 +825,7 @@ function App() {
                   buildingLength={buildingData.length} 
                   bays={buildingData.bays}
                   structuralFrames={buildingData.structuralFrames}
+                  walls={buildingData.walls}
                 />
               </Card.Body>
             </Card>

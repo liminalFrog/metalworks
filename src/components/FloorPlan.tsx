@@ -209,51 +209,87 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
       height: number, 
       orientation: 'horizontal' | 'vertical',
       direction: 'in' | 'out' = 'in' // Door swing direction
-    ) => {
-      ctx.lineWidth = 1;
+    ) => {      ctx.lineWidth = 1;
       ctx.strokeStyle = '#000';
       
-      const doorLength = width > height ? width : height; // Use larger dimension as door length
-      const doorPadding = 2; // Gap to show wall break
+      // For doors that come from dimensions string (e.g. "3x7"), the first number is width, second is height
+      const doorWidth = width; // Use actual width 
+      const doorPadding = Math.max(2, doorWidth / 20); // Scale gap with door size
+      const swingLength = doorWidth; // Make the diagonal swing line proportional to door width
       
       if (orientation === 'horizontal') {
         // Draw the wall break
         ctx.beginPath();
-        ctx.moveTo(x - doorLength/2, y - doorPadding);
-        ctx.lineTo(x - doorLength/2, y + doorPadding);
-        ctx.moveTo(x + doorLength/2, y - doorPadding);
-        ctx.lineTo(x + doorLength/2, y + doorPadding);
+        ctx.moveTo(x - doorWidth/2, y - doorPadding);
+        ctx.lineTo(x - doorWidth/2, y + doorPadding);
+        ctx.moveTo(x + doorWidth/2, y - doorPadding);
+        ctx.lineTo(x + doorWidth/2, y + doorPadding);
         ctx.stroke();
         
         // Draw the door swing (diagonal line)
         ctx.beginPath();
         if (direction === 'in') {
-          ctx.moveTo(x - doorLength/2, y);
-          ctx.lineTo(x, y + doorLength/2);
+          // Door swings inside the building (down/south in horizontal orientation)
+          ctx.moveTo(x - doorWidth / 2, y);
+          ctx.lineTo(x - doorWidth / 2, y + swingLength);
+          ctx.stroke();
+          
+          // Draw the arc for the door swing
+          ctx.setLineDash([2, 2]); // Set to dashed line
+          ctx.beginPath();
+          ctx.arc(x - doorWidth / 2, y, swingLength, -Math.PI/2, 0, false);
+          ctx.stroke();
+          ctx.setLineDash([]); // Reset to solid line
         } else {
-          ctx.moveTo(x - doorLength/2, y);
-          ctx.lineTo(x, y - doorLength/2);
+          // Door swings outside the building (up/north in horizontal orientation)
+          ctx.moveTo(x - doorWidth / 2, y);
+          ctx.lineTo(x - doorWidth / 2, y - swingLength);
+          ctx.stroke();
+          
+          // Draw the arc for the door swing
+          ctx.setLineDash([2, 2]); // Set to dashed line
+          ctx.beginPath();
+          ctx.arc(x - doorWidth / 2, y, swingLength, 0, -Math.PI/2, true);
+          ctx.stroke();
+          ctx.setLineDash([]); // Reset to solid line
         }
         ctx.stroke();
       } else {
         // Draw the wall break
         ctx.beginPath();
-        ctx.moveTo(x - doorPadding, y - doorLength/2);
-        ctx.lineTo(x + doorPadding, y - doorLength/2);
-        ctx.moveTo(x - doorPadding, y + doorLength/2);
-        ctx.lineTo(x + doorPadding, y + doorLength/2);
+        ctx.moveTo(x - doorPadding, y - doorWidth/2);
+        ctx.lineTo(x + doorPadding, y - doorWidth/2);
+        ctx.moveTo(x - doorPadding, y + doorWidth/2);
+        ctx.lineTo(x + doorPadding, y + doorWidth/2);
         ctx.stroke();
         
         // Draw the door swing (diagonal line)
         ctx.beginPath();
         if (direction === 'in') {
-          ctx.moveTo(x, y - doorLength/2);
-          ctx.lineTo(x + doorLength/2, y);
+          // Door swings inside the building (right/east in vertical orientation)
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + swingLength, y);
+          ctx.stroke();
+          
+          // Draw the arc for the door swing
+          ctx.setLineDash([2, 2]); // Set to dashed line
+          ctx.beginPath();
+          ctx.arc(x, y, -swingLength, Math.PI, Math.PI/2, true);
+          ctx.stroke();
+          ctx.setLineDash([]); // Reset to solid line
         } else {
-          ctx.moveTo(x, y - doorLength/2);
-          ctx.lineTo(x - doorLength/2, y);
+          // Door swings outside the building (left/west in vertical orientation)
+          ctx.moveTo(x, y);
+          ctx.lineTo(x - swingLength, y);
+          ctx.stroke();
+          
+          // Draw the arc for the door swing
+          ctx.setLineDash([2, 2]); // Set to dashed line
+          ctx.beginPath();
+          ctx.arc(x, y, swingLength, 0, Math.PI/2, false);
+          ctx.stroke();
+          ctx.setLineDash([]); // Reset to solid line
         }
-        ctx.stroke();
       }
     };
     
@@ -671,13 +707,13 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     
     // Draw wall openings (doors, windows, etc.)
     // North wall openings
-    if (walls.north && walls.north.doors) {
-      // Draw walk doors on north wall
+    if (walls.north && walls.north.doors) {      // Draw walk doors on north wall
       walls.north.doors.forEach(door => {
         const [width, height] = door.dimensions.split('x').map(Number);
         const scaledWidth = (width / buildingWidth) * drawingWidth;
+        const scaledHeight = (height / 10) * drawingWidth / buildingWidth * 10; // Scale height proportionally to the building drawing
         const doorX = getPositionOnWall(door.position, buildingX, buildingX + drawingWidth, bays);
-        drawWalkDoor(doorX, buildingY, scaledWidth, height, 'horizontal', 'out');
+        drawWalkDoor(doorX, buildingY, scaledWidth, scaledHeight, 'horizontal', 'out');
       });
       
       // Draw windows on north wall
@@ -709,13 +745,13 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     }
     
     // South wall openings
-    if (walls.south && walls.south.doors) {
-      // Draw walk doors on south wall
+    if (walls.south && walls.south.doors) {      // Draw walk doors on south wall
       walls.south.doors.forEach(door => {
         const [width, height] = door.dimensions.split('x').map(Number);
         const scaledWidth = (width / buildingWidth) * drawingWidth;
+        const scaledHeight = (height / 10) * drawingWidth / buildingWidth * 10; // Scale height proportionally to the building drawing
         const doorX = getPositionOnWall(door.position, buildingX, buildingX + drawingWidth, bays);
-        drawWalkDoor(doorX, buildingY + drawingHeight, scaledWidth, height, 'horizontal', 'in');
+        drawWalkDoor(doorX, buildingY + drawingHeight, scaledWidth, scaledHeight, 'horizontal', 'in');
       });
       
       // Draw windows on south wall
@@ -747,13 +783,13 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     }
     
     // East wall openings
-    if (walls.east && walls.east.doors) {
-      // Draw walk doors on east wall
+    if (walls.east && walls.east.doors) {      // Draw walk doors on east wall
       walls.east.doors.forEach(door => {
         const [width, height] = door.dimensions.split('x').map(Number);
+        const scaledWidth = (width / 10) * drawingHeight / buildingLength * 10; // Scale width proportionally to the building drawing
         const scaledHeight = (height / buildingLength) * drawingHeight;
         const doorY = getPositionOnWall(door.position, buildingY, buildingY + drawingHeight, bays);
-        drawWalkDoor(buildingX + drawingWidth, doorY, width, scaledHeight, 'vertical', 'in');
+        drawWalkDoor(buildingX + drawingWidth, doorY, scaledWidth, scaledHeight, 'vertical', 'in');
       });
       
       // Draw windows on east wall
@@ -785,13 +821,13 @@ const FloorPlan: React.FC<FloorPlanProps> = ({
     }
     
     // West wall openings
-    if (walls.west && walls.west.doors) {
-      // Draw walk doors on west wall
+    if (walls.west && walls.west.doors) {      // Draw walk doors on west wall
       walls.west.doors.forEach(door => {
         const [width, height] = door.dimensions.split('x').map(Number);
+        const scaledWidth = (width / 10) * drawingHeight / buildingLength * 10; // Scale width proportionally to the building drawing
         const scaledHeight = (height / buildingLength) * drawingHeight;
         const doorY = getPositionOnWall(door.position, buildingY, buildingY + drawingHeight, bays);
-        drawWalkDoor(buildingX, doorY, width, scaledHeight, 'vertical', 'out');
+        drawWalkDoor(buildingX, doorY, scaledWidth, scaledHeight, 'vertical', 'out');
       });
       
       // Draw windows on west wall
